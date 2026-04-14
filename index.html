@@ -304,11 +304,12 @@ function z1min(){return Math.round(ftp*.45);}
 function z2min(){return Math.round(ftp*.56);}
 function z2max(){return Math.round(ftp*.75);}
 
+const PROXY='https://ob2g-proxy.onrender.com';
 async function icuFetch(path,method='GET',body=null){
-  const opts={method,headers:{'Authorization':'Basic '+btoa('API_KEY:'+apiKey),'Content-Type':'application/json'}};
+  const opts={method,headers:{'Content-Type':'application/json','x-api-key':apiKey}};
   if(body)opts.body=JSON.stringify(body);
   try{
-    const r=await fetch('https://intervals.icu/api/v1/athlete/i0'+path,opts);
+    const r=await fetch(PROXY+'/api'+path,opts);
     if(!r.ok)return null;
     if(method==='DELETE')return true;
     return r.json();
