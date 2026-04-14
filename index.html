@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>OB²G · Coach IA</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --black:      #111111;
+  --dark:       #181818;
+  --card:       #202020;
+  --card2:      #282828;
+  --border:     rgba(232,224,204,0.08);
+  --border2:    rgba(232,224,204,0.18);
+  --cream:      #e8e0cc;
+  --cream2:     #c8bfa8;
+  --cream3:     #8a8070;
+  --cream4:     #504840;
+  --green:      #4caf7d;
+  --amber:      #c8922a;
+  --red:        #c84040;
+  --teal:       #3a9898;
+  --font-h:     'Bebas Neue', sans-serif;
+  --font-sub:   'Barlow Condensed', sans-serif;
+  --font-body:  'Barlow', sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:var(--black);color:var(--cream);font-family:var(--font-body);overflow:hidden;}
+
+/* ── SETUP ── */
+#screen-setup{
+  position:fixed;inset:0;z-index:20;
+  background:var(--black);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;
+}
+.s-logo{
+  font-family:var(--font-h);font-size:64px;letter-spacing:.06em;
+  color:var(--cream);line-height:1;margin-bottom:2px;
+}
+.s-logo sup{font-size:32px;vertical-align:super;color:var(--cream2);}
+.s-tag{
+  font-family:var(--font-sub);font-size:12px;font-weight:400;
+  color:var(--cream3);letter-spacing:.18em;text-transform:uppercase;
+  margin-bottom:40px;
+}
+.s-card{
+  width:100%;max-width:360px;
+  background:var(--card);border:1px solid var(--border2);border-radius:14px;padding:22px;
+}
+.s-lbl{font-size:11px;color:var(--cream3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;font-family:var(--font-sub);}
+.s-inp{
+  width:100%;padding:12px 14px;
+  background:var(--card2);border:1px solid var(--border2);
+  border-radius:8px;color:var(--cream);
+  font-family:'Courier New',monospace;font-size:13px;
+  outline:none;margin-bottom:8px;transition:border-color .2s;
+}
+.s-inp:focus{border-color:var(--cream2);}
+.s-hint{font-size:11px;color:var(--cream4);margin-bottom:20px;line-height:1.6;}
+.s-hint b{color:var(--cream2);font-weight:500;}
+.s-btn{
+  width:100%;padding:14px;
+  background:var(--cream);border:none;border-radius:8px;
+  color:var(--black);font-family:var(--font-h);
+  font-size:18px;letter-spacing:.1em;cursor:pointer;transition:opacity .15s;
+}
+.s-btn:active{opacity:.8;}
+.s-btn:disabled{opacity:.3;cursor:not-allowed;}
+.s-err{font-size:12px;color:var(--red);text-align:center;margin-top:10px;display:none;}
+
+/* ── APP ── */
+#screen-app{position:fixed;inset:0;display:none;flex-direction:column;}
+
+/* HEADER */
+#hdr{
+  padding:10px 14px 8px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;
+  background:var(--black);flex-shrink:0;
+}
+.h-logo{
+  font-family:var(--font-h);font-size:22px;letter-spacing:.06em;
+  color:var(--cream);line-height:1;
+}
+.h-logo sup{font-size:13px;vertical-align:super;color:var(--cream3);}
+.h-sep{width:1px;height:18px;background:var(--border2);}
+.h-name{font-size:12px;color:var(--cream3);flex:1;font-family:var(--font-sub);letter-spacing:.04em;}
+.h-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;}
+.h-ftp{
+  display:flex;align-items:center;gap:6px;
+  background:var(--card2);border:1px solid var(--border2);
+  border-radius:20px;padding:4px 4px 4px 10px;
+}
+.h-fv{font-family:var(--font-h);font-size:15px;color:var(--cream);letter-spacing:.04em;}
+.h-fedit{
+  width:26px;height:26px;border-radius:50%;
+  background:rgba(232,224,204,.08);border:1px solid var(--border2);
+  color:var(--cream2);font-size:12px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:background .15s;
+}
+.h-fedit:active{background:rgba(232,224,204,.16);}
+
+/* FTP MODAL */
+#ftp-modal{
+  position:fixed;inset:0;z-index:50;
+  background:rgba(0,0,0,.8);
+  display:none;align-items:center;justify-content:center;padding:24px;
+}
+#ftp-modal.open{display:flex;}
+.fm-card{
+  width:100%;max-width:320px;
+  background:var(--card);border:1px solid var(--border2);border-radius:16px;padding:22px;
+}
+.fm-title{font-family:var(--font-h);font-size:24px;letter-spacing:.06em;color:var(--cream);margin-bottom:4px;}
+.fm-sub{font-size:12px;color:var(--cream3);margin-bottom:18px;}
+.fm-inp{
+  width:100%;padding:14px;
+  background:var(--card2);border:1px solid var(--border2);
+  border-radius:8px;color:var(--cream);
+  font-family:var(--font-h);font-size:32px;letter-spacing:.04em;
+  text-align:center;outline:none;margin-bottom:10px;
+}
+.fm-inp:focus{border-color:var(--cream2);}
+.fm-zones{background:var(--card2);border-radius:8px;padding:10px 12px;margin-bottom:16px;}
+.fz-row{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid var(--border);}
+.fz-row:last-child{border-bottom:none;}
+.fz-n{color:var(--cream3);font-family:var(--font-sub);letter-spacing:.04em;}
+.fz-v{color:var(--cream);font-weight:500;}
+.fz-accent{color:var(--cream) !important;font-weight:600;}
+.fm-btns{display:flex;gap:8px;}
+.fm-cancel{flex:1;padding:12px;background:none;border:1px solid var(--border2);border-radius:8px;color:var(--cream3);font-family:var(--font-body);font-size:14px;cursor:pointer;}
+.fm-save{flex:2;padding:12px;background:var(--cream);border:none;border-radius:8px;color:var(--black);font-family:var(--font-h);font-size:17px;letter-spacing:.08em;cursor:pointer;}
+
+/* TABS */
+#tabs{display:flex;background:var(--black);border-bottom:1px solid var(--border);flex-shrink:0;}
+.tab{
+  flex:1;padding:10px 4px;font-size:13px;font-weight:600;
+  letter-spacing:.06em;text-transform:uppercase;
+  color:var(--cream4);background:none;border:none;
+  border-bottom:2px solid transparent;cursor:pointer;
+  font-family:var(--font-sub);transition:all .2s;
+}
+.tab.active{color:var(--cream);border-bottom-color:var(--cream);}
+
+/* PANELS */
+#panels{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+.panel{display:none;flex-direction:column;height:100%;}
+.panel.active{display:flex;}
+.scroll{flex:1;overflow-y:auto;padding:12px 14px;}
+.scroll::-webkit-scrollbar{width:2px;}
+.scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:1px;}
+
+/* MESSAGES */
+#msgs{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px;}
+#msgs::-webkit-scrollbar{width:2px;}
+#msgs::-webkit-scrollbar-thumb{background:var(--border2);}
+.mrow{display:flex;flex-direction:column;}
+.mrow.user{align-items:flex-end;}
+.mrow.coach{align-items:flex-start;}
+.mrow.sys{align-items:center;}
+.bubble{max-width:84%;padding:10px 14px;font-size:14px;line-height:1.6;word-break:break-word;border-radius:16px;}
+.bubble.user{background:var(--cream);color:var(--black);font-weight:500;border-bottom-right-radius:3px;}
+.bubble.coach{background:var(--card);color:var(--cream);border:1px solid var(--border);border-bottom-left-radius:3px;}
+.bubble.sys{font-size:11px;color:var(--cream4);font-family:'Courier New',monospace;background:none;max-width:100%;padding:2px 0;}
+.mtime{font-size:11px;color:var(--cream4);margin-top:3px;padding:0 4px;}
+.typing{background:var(--card);border:1px solid var(--border);border-radius:16px;border-bottom-left-radius:3px;padding:12px 16px;align-self:flex-start;}
+.dots{display:flex;gap:5px;}
+.dots i{display:block;width:7px;height:7px;border-radius:50%;background:var(--cream3);animation:db 1.4s infinite ease-in-out;font-style:normal;}
+.dots i:nth-child(2){animation-delay:.2s;}
+.dots i:nth-child(3){animation-delay:.4s;}
+@keyframes db{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
+
+/* QUICK */
+#quick{display:flex;gap:6px;padding:8px 14px 4px;overflow-x:auto;flex-shrink:0;}
+#quick::-webkit-scrollbar{display:none;}
+.qa{white-space:nowrap;font-size:12px;padding:7px 13px;border-radius:20px;background:var(--card);border:1px solid var(--border2);color:var(--cream3);cursor:pointer;font-family:var(--font-body);transition:all .15s;}
+.qa:active{background:var(--card2);transform:scale(.97);}
+
+/* INPUT */
+#ibar{padding:10px 12px;border-top:1px solid var(--border);background:var(--black);display:flex;gap:8px;align-items:flex-end;flex-shrink:0;}
+#inp{flex:1;padding:10px 14px;background:var(--card);border:1px solid var(--border2);border-radius:22px;color:var(--cream);font-family:var(--font-body);font-size:14px;resize:none;line-height:1.4;max-height:90px;outline:none;}
+#inp:focus{border-color:var(--cream2);}
+#inp::placeholder{color:var(--cream4);}
+#sendbtn{width:42px;height:42px;border-radius:50%;background:var(--cream);border:none;color:var(--black);font-size:18px;font-weight:700;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:transform .15s,opacity .15s;}
+#sendbtn:active{transform:scale(.9);}
+#sendbtn:disabled{opacity:.3;cursor:not-allowed;}
+
+/* STATS */
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.sc{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;}
+.sl{font-size:10px;color:var(--cream3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;font-family:var(--font-sub);}
+.sv{font-size:26px;font-weight:700;font-family:var(--font-h);color:var(--cream);line-height:1;letter-spacing:.02em;}
+.sd{font-size:11px;color:var(--cream4);margin-top:3px;}
+.bar{height:2px;background:var(--border);border-radius:1px;margin-top:10px;overflow:hidden;}
+.bfill{height:100%;border-radius:1px;transition:width .8s;}
+.sec{font-size:10px;font-weight:600;color:var(--cream3);text-transform:uppercase;letter-spacing:.12em;margin:16px 0 8px;font-family:var(--font-sub);}
+.ar{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+.ar:last-child{border-bottom:none;}
+.ai{width:34px;height:34px;border-radius:6px;background:rgba(232,224,204,.06);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.an{font-size:13px;font-weight:500;color:var(--cream);}
+.am{font-size:11px;color:var(--cream3);margin-top:1px;}
+.atss{margin-left:auto;font-family:var(--font-h);font-size:13px;color:var(--cream2);background:rgba(232,224,204,.08);padding:3px 8px;border-radius:5px;flex-shrink:0;letter-spacing:.04em;}
+
+/* CAL */
+.cd{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px;}
+.cd.today{border-left:3px solid var(--cream2);}
+.ch{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.cn{font-size:15px;font-weight:600;font-family:var(--font-h);color:var(--cream);letter-spacing:.04em;}
+.cdate{font-size:11px;color:var(--cream3);}
+.cwo{font-size:12px;background:rgba(232,224,204,.04);border-radius:5px;padding:7px 10px;display:flex;align-items:center;justify-content:space-between;color:var(--cream2);}
+.crest{font-size:12px;color:var(--cream4);font-style:italic;}
+.badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;letter-spacing:.06em;flex-shrink:0;margin-left:6px;font-family:var(--font-sub);}
+.bz2{background:rgba(76,175,125,.12);color:var(--green);}
+.brec{background:rgba(58,152,152,.12);color:var(--teal);}
+.bkey{background:rgba(232,224,204,.1);color:var(--cream);}
+.cta{width:100%;margin-top:10px;padding:13px;background:none;border:1px solid var(--border2);border-radius:10px;color:var(--cream3);font-size:13px;font-family:var(--font-body);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .15s;}
+.cta:active{background:var(--card);}
+</style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div id="screen-setup">
+  <div class="s-logo">OB<sup>2</sup>G</div>
+  <div class="s-tag">The Old Big Bearded Guy · Coach IA</div>
+  <div class="s-card">
+    <div class="s-lbl">Clé API Intervals.icu</div>
+    <input class="s-inp" type="password" id="key-inp" placeholder="Colle ta clé ici..." autocomplete="off" autocorrect="off" spellcheck="false"/>
+    <div class="s-hint">Où la trouver : <b>intervals.icu</b> → avatar → Settings → bas de page → <b>Developer Settings</b></div>
+    <button class="s-btn" id="conn-btn" onclick="connect()">CONNECTER</button>
+    <div class="s-err" id="setup-err">Clé invalide. Vérifie et réessaie.</div>
+  </div>
+</div>
+
+<!-- FTP MODAL -->
+<div id="ftp-modal">
+  <div class="fm-card">
+    <div class="fm-title">MODIFIER FTP</div>
+    <div class="fm-sub">Puissance seuil fonctionnel en watts</div>
+    <input class="fm-inp" type="number" id="ftp-inp" value="160" min="50" max="500" oninput="updateZones()"/>
+    <div class="fm-zones" id="ftp-zones"></div>
+    <div class="fm-btns">
+      <button class="fm-cancel" onclick="closeFtp()">Annuler</button>
+      <button class="fm-save" onclick="saveFtp()">SAUVEGARDER</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="screen-app">
+  <div id="hdr">
+    <div class="h-logo">OB<sup>2</sup>G</div>
+    <div class="h-sep"></div>
+    <div class="h-name" id="hdr-name">Coach IA</div>
+    <div class="h-dot"></div>
+    <div class="h-ftp">
+      <span class="h-fv" id="ftp-display">160W</span>
+      <button class="h-fedit" onclick="openFtp()">✏️</button>
+    </div>
+  </div>
+
+  <div id="tabs">
+    <button class="tab active" onclick="goTab('chat')">💬 Coach</button>
+    <button class="tab" onclick="goTab('calendar')">📅 Calendrier</button>
+    <button class="tab" onclick="goTab('data')">📊 Données</button>
+  </div>
+
+  <div id="panels">
+    <div class="panel active" id="panel-chat">
+      <div id="msgs"></div>
+      <div id="quick">
+        <button class="qa" onclick="qs('Je suis fatigué ce soir, adapte ma séance')">😴 Fatigué</button>
+        <button class="qa" onclick="qs('Semaine très chargée, adapte le programme')">💼 Chargé</button>
+        <button class="qa" onclick="qs('Forme au top, pas de signe de migraine !')">✅ En forme</button>
+        <button class="qa" onclick="qs('Analyse mes données et adapte mon entraînement')">📊 Mes stats</button>
+        <button class="qa" onclick="qs('Crée ma séance pour demain')">➕ Séance</button>
+        <button class="qa" onclick="qs('Que manger ce soir avant ma séance de demain ?')">🍽️ Nutrition</button>
+      </div>
+      <div id="ibar">
+        <textarea id="inp" placeholder="Parle à ton coach..." rows="1" oninput="resize(this)" onkeydown="onkey(event)"></textarea>
+        <button id="sendbtn" onclick="send()">↑</button>
+      </div>
+    </div>
+    <div class="panel" id="panel-calendar">
+      <div class="scroll" id="cal-body"><div style="text-align:center;padding:40px;color:var(--cream4)">Chargement...</div></div>
+    </div>
+    <div class="panel" id="panel-data">
+      <div class="scroll" id="data-body"><div style="text-align:center;padding:40px;color:var(--cream4)">Chargement...</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SAVED_KEY='1wcq6oe8fxdpc00sywh6pfa6s';
+let apiKey='',ftp=parseInt(localStorage.getItem('ob2g_ftp')||'160');
+let athlete=null,activities=[],events=[],history=[],busy=false;
+const DAYS=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+const MONTHS=['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
+
+function fmtDate(d){return d.toISOString().split('T')[0];}
+function todayStr(){return fmtDate(new Date());}
+function nowT(){return new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});}
+function z1min(){return Math.round(ftp*.45);}
+function z2min(){return Math.round(ftp*.56);}
+function z2max(){return Math.round(ftp*.75);}
+
+async function icuFetch(path,method='GET',body=null){
+  const opts={method,headers:{'Authorization':'Basic '+btoa('API_KEY:'+apiKey),'Content-Type':'application/json'}};
+  if(body)opts.body=JSON.stringify(body);
+  try{
+    const r=await fetch('https://intervals.icu/api/v1/athlete/i0'+path,opts);
+    if(!r.ok)return null;
+    if(method==='DELETE')return true;
+    return r.json();
+  }catch(e){return null;}
+}
+
+async function connect(){
+  const k=document.getElementById('key-inp').value.trim();
+  if(!k)return;
+  const btn=document.getElementById('conn-btn');
+  btn.disabled=true;btn.textContent='CONNEXION...';
+  document.getElementById('setup-err').style.display='none';
+  apiKey=k;
+  const r=await icuFetch('');
+  if(!r){
+    apiKey='';
+    document.getElementById('setup-err').style.display='block';
+    btn.disabled=false;btn.textContent='CONNECTER';return;
+  }
+  athlete=r;localStorage.setItem('ob2g_key',k);launch();
+}
+
+async function launch(){
+  document.getElementById('screen-setup').style.display='none';
+  document.getElementById('screen-app').style.display='flex';
+  updateFtpDisplay();
+  const fn=(athlete.name||'').split(' ')[0]||'Rider';
+  document.getElementById('hdr-name').textContent=(athlete.name||'Mon compte').toUpperCase();
+  if(athlete.icu_ftp&&!localStorage.getItem('ob2g_ftp')){ftp=athlete.icu_ftp;updateFtpDisplay();}
+  const n=new Date(),old=fmtDate(new Date(n-21*864e5)),nw=fmtDate(new Date(n.getTime()+14*864e5));
+  const acts=await icuFetch('/activities?oldest='+old+'&newest='+nw+'&limit=10');
+  if(acts&&Array.isArray(acts))activities=acts;
+  const evs=await icuFetch('/events?oldest='+old+'&newest='+nw);
+  if(evs&&Array.isArray(evs))events=evs;
+  renderCalendar();renderData();
+  const planned=events.filter(e=>(e.start_date_local||'').split('T')[0]>=todayStr()&&e.category==='WORKOUT').length;
+  addMsg('coach','Salut '+fn+' 🤙 Connecté à Intervals.icu. '+(planned>0?planned+' séance(s) planifiée(s). ':'Calendrier vide. ')+'FTP à '+ftp+'W. Dis-moi comment tu vas !');
+}
+
+function openFtp(){document.getElementById('ftp-inp').value=ftp;updateZones();document.getElementById('ftp-modal').classList.add('open');}
+function closeFtp(){document.getElementById('ftp-modal').classList.remove('open');}
+function updateZones(){
+  const v=parseInt(document.getElementById('ftp-inp').value)||ftp;
+  const z=[
+    ['Z1  Récupération',Math.round(v*.45)+' – '+Math.round(v*.55)+'W',false],
+    ['Z2  Endurance',Math.round(v*.56)+' – '+Math.round(v*.75)+'W',true],
+    ['Z3  Tempo',Math.round(v*.76)+' – '+Math.round(v*.87)+'W',false],
+    ['Z4  Seuil',Math.round(v*.88)+' – '+Math.round(v*.94)+'W',false],
+    ['Z5  VO2Max','>'+Math.round(v*.95)+'W',false],
+  ];
+  document.getElementById('ftp-zones').innerHTML=z.map(([n,val,a])=>
+    `<div class="fz-row"><span class="fz-n">${n}</span><span class="fz-v${a?' fz-accent':''}">${val}</span></div>`
+  ).join('');
+}
+function saveFtp(){
+  const v=parseInt(document.getElementById('ftp-inp').value);
+  if(!v||v<50||v>500)return;
+  ftp=v;localStorage.setItem('ob2g_ftp',ftp);updateFtpDisplay();closeFtp();
+  addMsg('coach','FTP mise à jour à '+ftp+'W. Z2 : '+z2min()+' – '+z2max()+'W / 114-137 bpm. ✓');
+}
+function updateFtpDisplay(){document.getElementById('ftp-display').textContent=ftp+'W';}
+
+function buildCtx(){
+  let c='DONNÉES TEMPS RÉEL:\n';
+  c+='FTP: '+ftp+'W | Z1: '+Math.round(ftp*.45)+'-'+Math.round(ftp*.55)+'W | Z2: '+z2min()+'-'+z2max()+'W\n';
+  if(athlete)c+='CTL: '+Math.round(athlete.icu_ctl||0)+' | ATL: '+Math.round(athlete.icu_atl||0)+' | TSB: '+Math.round((athlete.icu_ctl||0)-(athlete.icu_atl||0))+'\n';
+  c+='Aujourd\'hui: '+todayStr()+'\n';
+  if(activities.length){
+    c+='\nActivités récentes:\n';
+    activities.slice(0,5).forEach(a=>{
+      c+='- '+(a.start_date_local||'').split('T')[0]+': '+(a.name||'Sortie')+' | '+Math.round((a.moving_time||0)/60)+'min';
+      if(a.average_watts)c+=' | '+Math.round(a.average_watts)+'W';
+      if(a.average_heartrate)c+=' | '+Math.round(a.average_heartrate)+'bpm';
+      if(a.icu_training_load)c+=' | '+Math.round(a.icu_training_load)+'TSS';
+      c+='\n';
+    });
+  }
+  const pl=events.filter(e=>(e.start_date_local||'').split('T')[0]>=todayStr()&&e.category==='WORKOUT');
+  if(pl.length){c+='\nSéances planifiées:\n';pl.forEach(e=>c+='- ID:'+e.id+' | '+(e.start_date_local||'').split('T')[0]+': '+e.name+'\n');}
+  return c;
+}
+
+const SYS=`Tu es le coach cycliste OB²G — The Old Big Bearded Guy. Expert, direct, impliqué, avec du caractère.
+
+PROFIL ATHLÈTE:
+- Reprise 2 ans arrêt | confirmé avant (5h+/sem, compétitions loisir)
+- MIGRAINES D'EFFORT: Z2 max absolu | stop immédiat si signe précurseur  
+- Objectif: -20kg (1-1.5kg/mois) + retrouver le niveau
+- FC max: 165bpm | Z1: <114bpm | Z2: 114-137bpm
+- Smart trainer + vélo route + capteur puissance + cardio | Zwift via Intervals.icu
+- PHASE 1 (sem 1-4): Z1-Z2 uniquement
+
+NUTRITION: 1/2 légumes + 1/4 protéines + 1/4 féculents | 1.6g prot/kg/j | jamais à jeun
+
+ACTIONS API:
+Créer: [ACTION:CREATE {"date":"YYYY-MM-DD","name":"Nom","duration":50,"desc":"- Xm XX% // desc"}]
+Supprimer: [ACTION:DELETE {"id":12345}]
+
+Réponds en français, sois concis et direct. Ton style: coach exigeant mais bienveillant, comme OB²G.`;
+
+async function send(){
+  const el=document.getElementById('inp');
+  const text=el.value.trim();if(!text||busy)return;
+  el.value='';el.style.height='auto';
+  busy=true;document.getElementById('sendbtn').disabled=true;
+  addMsg('user',text);showTyping();history.push({role:'user',content:text});
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,system:SYS+'\n\n'+buildCtx(),messages:history})
+    });
+    const data=await res.json();
+    const reply=data.content?.[0]?.text||'Erreur.';
+    history.push({role:'assistant',content:reply});
+    hideTyping();await processReply(reply);
+  }catch(e){hideTyping();addMsg('coach','Erreur réseau.');}
+  busy=false;document.getElementById('sendbtn').disabled=false;
+}
+
+async function processReply(reply){
+  const rx=/\[ACTION:(CREATE|DELETE)\s+({[^}]+})\]/g;
+  const clean=reply.replace(rx,'').trim();
+  if(clean)addMsg('coach',clean);
+  let m;rx.lastIndex=0;
+  while((m=rx.exec(reply))!==null){
+    const type=m[1];let p;try{p=JSON.parse(m[2]);}catch(e){continue;}
+    if(type==='CREATE'){
+      sysMsg('Création dans Intervals.icu...');
+      const r=await icuFetch('/events','POST',{category:'WORKOUT',start_date_local:p.date+'T00:00:00',type:'Ride',name:p.name,description:p.desc||'- '+(p.duration||60)+'m 64% // Z2',moving_time:(p.duration||60)*60});
+      if(r){sysMsg('✓ "'+p.name+'" créée → sync Zwift auto');await reload();}
+      else sysMsg('✗ Erreur création');
+    }else if(type==='DELETE'&&p.id){
+      sysMsg('Suppression...');
+      await icuFetch('/events/'+p.id,'DELETE');
+      sysMsg('✓ Supprimée');await reload();
+    }
+  }
+}
+
+async function reload(){
+  const n=new Date(),old=fmtDate(new Date(n-7*864e5)),nw=fmtDate(new Date(n.getTime()+14*864e5));
+  const ev=await icuFetch('/events?oldest='+old+'&newest='+nw);
+  if(ev&&Array.isArray(ev))events=ev;renderCalendar();
+}
+
+function renderCalendar(){
+  const el=document.getElementById('cal-body');
+  const n=new Date();let h='<div class="sec">7 prochains jours</div>';
+  for(let i=0;i<7;i++){
+    const d=new Date(n);d.setDate(n.getDate()+i);
+    const ds=fmtDate(d);
+    const lbl=i===0?'AUJOURD\'HUI':i===1?'DEMAIN':DAYS[d.getDay()].toUpperCase();
+    const dl=d.getDate()+' '+MONTHS[d.getMonth()];
+    const pl=events.filter(e=>(e.start_date_local||'').split('T')[0]===ds&&e.category==='WORKOUT');
+    h+='<div class="cd'+(i===0?' today':'')+'"><div class="ch"><span class="cn">'+lbl+'</span><span class="cdate">'+dl+'</span></div>';
+    if(pl.length){pl.forEach(ev=>{
+      const dur=ev.moving_time?Math.round(ev.moving_time/60)+'min':'';
+      const nm=(ev.name||'').toLowerCase();
+      const b=nm.includes('longue')||nm.includes('j7')?'<span class="badge bkey">CLÉ</span>':nm.includes('recup')?'<span class="badge brec">RÉCUP</span>':'<span class="badge bz2">Z2</span>';
+      h+='<div class="cwo"><span>'+ev.name+(dur?' · '+dur:'')+'</span>'+b+'</div>';
+    });}else{h+='<div class="crest">repos</div>';}
+    h+='</div>';
+  }
+  h+='<button class="cta" onclick="qs(\'Adapte mon programme pour les 7 prochains jours\')">🔄 Demander au coach d\'adapter ↗</button>';
+  el.innerHTML=h;
+}
+
+function renderData(){
+  const el=document.getElementById('data-body');
+  const ctl=Math.round(athlete?.icu_ctl||0),atl=Math.round(athlete?.icu_atl||0),tsb=ctl-atl;
+  const tsbC=tsb>5?'var(--green)':tsb<-20?'var(--red)':'var(--amber)';
+  const tsbL=tsb>5?'Frais':tsb<-20?'Fatigué':'Normal';
+  let h='<div class="sg">';
+  h+='<div class="sc"><div class="sl">Fitness CTL</div><div class="sv">'+ctl+'</div><div class="sd">Forme de fond</div><div class="bar"><div class="bfill" style="width:'+Math.min(ctl,100)+'%;background:var(--cream2)"></div></div></div>';
+  h+='<div class="sc"><div class="sl">Fatigue ATL</div><div class="sv">'+atl+'</div><div class="sd">Charge récente</div><div class="bar"><div class="bfill" style="width:'+Math.min(atl,100)+'%;background:var(--amber)"></div></div></div>';
+  h+='<div class="sc"><div class="sl">Forme TSB</div><div class="sv" style="color:'+tsbC+'">'+(tsb>=0?'+':'')+tsb+'</div><div class="sd">'+tsbL+'</div></div>';
+  h+='<div class="sc"><div class="sl">FTP</div><div class="sv">'+ftp+'<span style="font-size:12px;color:var(--cream4)">W</span></div><div class="sd">Phase 1 reprise</div></div>';
+  h+='</div>';
+  if(activities.length){
+    h+='<div class="sec">Dernières sorties</div>';
+    activities.slice(0,6).forEach(a=>{
+      const dur=Math.round((a.moving_time||0)/60);
+      const date=(a.start_date_local||'').split('T')[0];
+      const w=a.average_watts?Math.round(a.average_watts)+'W':'';
+      const hr=a.average_heartrate?Math.round(a.average_heartrate)+'bpm':'';
+      const tss=a.icu_training_load?Math.round(a.icu_training_load):null;
+      const meta=[date,dur+'min',w,hr].filter(Boolean).join(' · ');
+      h+='<div class="ar"><div class="ai">🚴</div><div style="flex:1"><div class="an">'+(a.name||'Sortie')+'</div><div class="am">'+meta+'</div></div>'+(tss?'<div class="atss">'+tss+' TSS</div>':'')+'</div>';
+    });
+  }else{
+    h+='<div class="sec">Activités</div><div style="text-align:center;padding:20px;color:var(--cream4);font-size:13px">Aucune activité récente<br><span style="font-size:11px;opacity:.6">Tes sorties Zwift apparaîtront ici</span></div>';
+  }
+  h+='<button class="cta" onclick="qs(\'Analyse mes données et adapte mon entraînement\')">🧠 Analyser avec le coach ↗</button>';
+  el.innerHTML=h;
+}
+
+function addMsg(role,text){
+  const el=document.getElementById('msgs');
+  const row=document.createElement('div');row.className='mrow '+role;
+  const b=document.createElement('div');b.className='bubble '+role;b.textContent=text;
+  row.appendChild(b);
+  if(role!=='sys'){const t=document.createElement('div');t.className='mtime';t.textContent=nowT();row.appendChild(t);}
+  el.appendChild(row);el.scrollTop=el.scrollHeight;
+}
+function sysMsg(t){
+  const el=document.getElementById('msgs');
+  const row=document.createElement('div');row.className='mrow sys';
+  const b=document.createElement('div');b.className='bubble sys';b.textContent=t;
+  row.appendChild(b);el.appendChild(row);el.scrollTop=el.scrollHeight;
+}
+function showTyping(){
+  const el=document.getElementById('msgs');
+  const d=document.createElement('div');d.id='typing';d.className='mrow coach';
+  d.innerHTML='<div class="typing"><div class="dots"><i></i><i></i><i></i></div></div>';
+  el.appendChild(d);el.scrollTop=el.scrollHeight;
+}
+function hideTyping(){const d=document.getElementById('typing');if(d)d.remove();}
+function goTab(n){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['chat','calendar','data'][i]===n));
+  document.querySelectorAll('.panel').forEach((p,i)=>p.classList.toggle('active',['panel-chat','panel-calendar','panel-data'][i]==='panel-'+n));
+}
+function qs(t){document.getElementById('inp').value=t;send();}
+function resize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,90)+'px';}
+function onkey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}
+
+window.onload=()=>{
+  const saved=localStorage.getItem('ob2g_key')||SAVED_KEY;
+  if(saved){document.getElementById('key-inp').value=saved;connect();}
+};
+</script>
+</body>
+</html>
