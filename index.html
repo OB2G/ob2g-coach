@@ -291,7 +291,6 @@ html,body{height:100%;background:var(--black);color:var(--cream);font-family:var
 </div>
 
 <script>
-const SAVED_KEY='6v4wzsfajasndk1xdv5y2bg2u';
 let apiKey='',ftp=parseInt(localStorage.getItem('ob2g_ftp')||'160');
 let athlete=null,activities=[],events=[],history=[],busy=false;
 const DAYS=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
@@ -536,7 +535,7 @@ function resize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHei
 function onkey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}
 
 window.onload=()=>{
-  const saved=localStorage.getItem('ob2g_key')||SAVED_KEY;
+  const saved=localStorage.getItem('ob2g_key');
   if(saved){document.getElementById('key-inp').value=saved;connect();}
 };
 </script>
