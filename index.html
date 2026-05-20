@@ -30,8 +30,11 @@ html,body{height:100%;background:var(--black);color:var(--cream);font-family:var
 .s-hint b{color:var(--cream2);font-weight:500;}
 .s-btn{width:100%;padding:14px;background:var(--cream);border:none;border-radius:8px;color:var(--black);font-family:var(--font-h);font-size:18px;letter-spacing:.1em;cursor:pointer;}
 .s-btn:disabled{opacity:.3;}
-.s-err{font-size:12px;color:var(--red);text-align:center;margin-top:10px;display:none;}
-.s-loading{font-size:12px;color:var(--cream3);text-align:center;margin-top:10px;display:none;}
+.s-err{font-size:12px;color:var(--red);text-align:center;margin-top:10px;}
+.s-loading{font-size:13px;color:var(--cream3);text-align:center;margin-top:16px;letter-spacing:.08em;font-family:var(--font-sub);}
+.s-spinner{display:flex;justify-content:center;margin-top:8px;}
+.s-spin-ring{width:40px;height:40px;border-radius:50%;border:2px solid var(--border2);border-top-color:var(--cream2);animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
 
 /* APP */
 #screen-app{position:fixed;inset:0;display:none;flex-direction:column;}
@@ -268,18 +271,21 @@ html,body{height:100%;background:var(--black);color:var(--cream);font-family:var
 </head>
 <body>
 
-<!-- SETUP -->
+<!-- LOADING SCREEN -->
 <div id="screen-setup">
   <div class="s-logo">OB<sup>2</sup>G</div>
   <div class="s-tag">The Old Big Bearded Guy · Coach IA</div>
-  <div class="s-card">
-    <div class="s-lbl">Clé API Intervals.icu</div>
-    <input class="s-inp" type="password" id="key-inp" placeholder="Colle ta clé ici..." autocomplete="off" autocorrect="off" spellcheck="false"/>
-    <div class="s-hint">Où la trouver : <b>intervals.icu</b> → avatar → Settings → bas de page → <b>Developer Settings</b></div>
-    <button class="s-btn" id="conn-btn" onclick="connect()">CONNECTER</button>
-    <div class="s-loading" id="setup-loading">Connexion en cours...</div>
-    <div class="s-err" id="setup-err">Connexion échouée. Réessaie dans 30s.</div>
+  <div id="setup-loading-wrap">
+    <div class="s-spinner">
+      <div class="s-spin-ring"></div>
+    </div>
+    <div class="s-loading" id="setup-loading">Connexion...</div>
   </div>
+  <div id="setup-err-wrap" style="display:none;text-align:center;">
+    <div class="s-err" id="setup-err" style="display:block;margin-bottom:16px;">Proxy en démarrage — réessaie dans 30s.</div>
+    <button class="s-btn" id="conn-btn" onclick="retryConnect()" style="max-width:200px;">RÉESSAYER</button>
+  </div>
+  <input type="hidden" id="key-inp" value=""/>
 </div>
 
 <!-- PROFIL MODAL -->
@@ -607,23 +613,9 @@ async function icuFetch(path,method='GET',body=null){
 }
 
 async function connect(){
-  const k=document.getElementById('key-inp').value.trim();
-  if(!k)return;
-  const btn=document.getElementById('conn-btn');
-  btn.disabled=true;
-  document.getElementById('setup-loading').style.display='block';
-  document.getElementById('setup-err').style.display='none';
-  apiKey=k;
+  apiKey='2ow79kzygxtvhcc6i2o6b4u8h';
   const r=await icuFetch('');
-  if(!r){
-    apiKey='';
-    document.getElementById('setup-err').style.display='block';
-    document.getElementById('setup-loading').style.display='none';
-    btn.disabled=false;return;
-  }
-  // Sauvegarder la clé dans JSONBin
-  fetch(PROXY+'/store/key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:k})}).catch(()=>{});
-  athlete=r;launch();
+  if(r){athlete=r;await launch();}
 }
 
 async function launch(){
@@ -1498,69 +1490,30 @@ async function briefingAvantSeance(){
   }, 500);
 }
 
+async function retryConnect(){
+  document.getElementById('setup-err-wrap').style.display='none';
+  document.getElementById('setup-loading-wrap').style.display='block';
+  document.getElementById('setup-loading').textContent='Reconnexion...';
+  apiKey='2ow79kzygxtvhcc6i2o6b4u8h';
+  const r=await icuFetch('');
+  if(r){athlete=r;await launch();}
+  else{
+    document.getElementById('setup-loading-wrap').style.display='none';
+    document.getElementById('setup-err-wrap').style.display='block';
+  }
+}
+
 window.onload=async()=>{
   document.getElementById('profile-bar').style.display='none';
   document.getElementById('health-bar').style.display='none';
-
-  const loadingEl=document.getElementById('setup-loading');
-  const errEl=document.getElementById('setup-err');
-  const btn=document.getElementById('conn-btn');
-
-  // Fonction avec timeout
-  async function fetchWithTimeout(url, opts={}, ms=8000){
-    const controller=new AbortController();
-    const tid=setTimeout(()=>controller.abort(),ms);
-    try{
-      const r=await fetch(url,{...opts,signal:controller.signal});
-      clearTimeout(tid);
-      return r;
-    }catch(e){
-      clearTimeout(tid);
-      throw e;
-    }
+  document.getElementById('setup-loading').textContent='Connexion...';
+  apiKey='2ow79kzygxtvhcc6i2o6b4u8h';
+  const r=await icuFetch('');
+  if(r){athlete=r;await launch();}
+  else{
+    document.getElementById('setup-loading-wrap').style.display='none';
+    document.getElementById('setup-err-wrap').style.display='block';
   }
-
-  // Essayer JSONBin d'abord
-  try{
-    loadingEl.style.display='block';
-    loadingEl.textContent='Connexion automatique...';
-    btn.disabled=true;
-
-    const r=await fetchWithTimeout(PROXY+'/store/key',{},6000);
-    const d=await r.json();
-
-    if(d&&d.key){
-      document.getElementById('key-inp').value=d.key;
-      apiKey=d.key;
-      const athlete_r=await icuFetch('');
-      if(athlete_r){
-        athlete=athlete_r;
-        await launch();
-        return;
-      }
-    }
-  }catch(e){
-    console.log('JSONBin timeout ou erreur:', e.message);
-  }
-
-  // Sinon essayer localStorage
-  const saved=localStorage.getItem('ob2g_key');
-  if(saved){
-    document.getElementById('key-inp').value=saved;
-    apiKey=saved;
-    const athlete_r=await icuFetch('');
-    if(athlete_r){
-      athlete=athlete_r;
-      await launch();
-      return;
-    }
-  }
-
-  // Echec — afficher le formulaire
-  loadingEl.style.display='none';
-  btn.disabled=false;
-  errEl.style.display='block';
-  errEl.textContent='Connexion automatique échouée — entre ta clé manuellement.';
 };
 </script>
 </body>
