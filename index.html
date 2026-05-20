@@ -1490,30 +1490,35 @@ async function briefingAvantSeance(){
   }, 500);
 }
 
-async function retryConnect(){
-  document.getElementById('setup-err-wrap').style.display='none';
+async function tryConnect(msg='Connexion...'){
   document.getElementById('setup-loading-wrap').style.display='block';
-  document.getElementById('setup-loading').textContent='Reconnexion...';
+  document.getElementById('setup-err-wrap').style.display='none';
   apiKey='2ow79kzygxtvhcc6i2o6b4u8h';
-  const r=await icuFetch('');
-  if(r){athlete=r;await launch();}
-  else{
-    document.getElementById('setup-loading-wrap').style.display='none';
-    document.getElementById('setup-err-wrap').style.display='block';
+
+  // Essaie jusqu'à 4 fois avec 15s entre chaque
+  for(let i=0;i<4;i++){
+    const dots='.'.repeat(i+1);
+    document.getElementById('setup-loading').textContent=msg+dots;
+    const r=await icuFetch('');
+    if(r){athlete=r;await launch();return;}
+    if(i<3){
+      document.getElementById('setup-loading').textContent='Proxy en démarrage'+(i>0?' ('+((i+1)*15)+'s)':'')+'...';
+      await new Promise(res=>setTimeout(res,15000));
+    }
   }
+  // Echec après 4 tentatives
+  document.getElementById('setup-loading-wrap').style.display='none';
+  document.getElementById('setup-err-wrap').style.display='block';
+}
+
+async function retryConnect(){
+  tryConnect('Reconnexion');
 }
 
 window.onload=async()=>{
   document.getElementById('profile-bar').style.display='none';
   document.getElementById('health-bar').style.display='none';
-  document.getElementById('setup-loading').textContent='Connexion...';
-  apiKey='2ow79kzygxtvhcc6i2o6b4u8h';
-  const r=await icuFetch('');
-  if(r){athlete=r;await launch();}
-  else{
-    document.getElementById('setup-loading-wrap').style.display='none';
-    document.getElementById('setup-err-wrap').style.display='block';
-  }
+  tryConnect('Connexion');
 };
 </script>
 </body>
