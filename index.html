@@ -818,8 +818,10 @@ function onkey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}
 
 window.onload=()=>{
   document.getElementById('profile-bar').style.display='none';
-  const saved=localStorage.getItem('ob2g_key');
-  if(saved){document.getElementById('key-inp').value=saved;connect();}
+  const KEY='2ow79kzygxtvhcc6i2o6b4u8h';
+  const saved=localStorage.getItem('ob2g_key')||KEY;
+  document.getElementById('key-inp').value=saved;
+  connect();
 };
 </script>
 </body>
