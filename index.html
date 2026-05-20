@@ -271,21 +271,17 @@ html,body{height:100%;background:var(--black);color:var(--cream);font-family:var
 </head>
 <body>
 
-<!-- LOADING SCREEN -->
+<!-- SETUP -->
 <div id="screen-setup">
   <div class="s-logo">OB<sup>2</sup>G</div>
   <div class="s-tag">The Old Big Bearded Guy · Coach IA</div>
-  <div id="setup-loading-wrap">
-    <div class="s-spinner">
-      <div class="s-spin-ring"></div>
-    </div>
-    <div class="s-loading" id="setup-loading">Connexion...</div>
+  <div class="s-card">
+    <div class="s-lbl">Clé API Intervals.icu</div>
+    <input class="s-inp" type="password" id="key-inp" placeholder="Colle ta clé ici..." autocomplete="off" autocorrect="off" spellcheck="false"/>
+    <div class="s-hint">Où la trouver : <b>intervals.icu</b> → avatar → Settings → bas de page → <b>Developer Settings</b></div>
+    <button class="s-btn" id="conn-btn" onclick="connect()">CONNECTER</button>
+    <div class="s-err" id="setup-err">Connexion échouée. Réessaie dans 30s.</div>
   </div>
-  <div id="setup-err-wrap" style="display:none;text-align:center;">
-    <div class="s-err" id="setup-err" style="display:block;margin-bottom:16px;">Proxy en démarrage — réessaie dans 30s.</div>
-    <button class="s-btn" id="conn-btn" onclick="retryConnect()" style="max-width:200px;">RÉESSAYER</button>
-  </div>
-  <input type="hidden" id="key-inp" value=""/>
 </div>
 
 <!-- PROFIL MODAL -->
@@ -615,11 +611,7 @@ async function icuFetch(path,method='GET',body=null){
   }catch(e){return null;}
 }
 
-async function connect(){
-  apiKey='2ow79kzygxtvhcc6i2o6b4u8h';
-  const r=await icuFetch('');
-  if(r){athlete=r;await launch();}
-}
+
 
 async function launch(){
   const p=loadProfil();
@@ -1493,59 +1485,33 @@ async function briefingAvantSeance(){
   }, 500);
 }
 
-function setLoadingText(t){
-  const el=document.getElementById('setup-loading');
-  if(el)el.textContent=t;
-}
-
-async function startApp(){
-  apiKey='2ow79kzygxtvhcc6i2o6b4u8h';
-  document.getElementById('setup-loading-wrap').style.display='block';
-  document.getElementById('setup-err-wrap').style.display='none';
-
-  let secs=0;
-  // Polling toutes les 3 secondes jusqu'à 90s max
-  const interval=setInterval(async()=>{
-    secs+=3;
-    if(secs<=10) setLoadingText('Connexion...');
-    else setLoadingText('Démarrage du serveur... '+secs+'s');
-    if(secs>=90){
-      clearInterval(interval);
-      document.getElementById('setup-loading-wrap').style.display='none';
-      document.getElementById('setup-err-wrap').style.display='block';
-    }
-  },3000);
-
-  // Tenter la connexion en boucle
-  while(secs<90){
-    try{
-      const r=await fetch(PROXY+'/api',{
-        method:'GET',
-        headers:{'Content-Type':'application/json','x-api-key':apiKey}
-      });
-      if(r.ok){
-        const data=await r.json();
-        if(data&&data.id){
-          clearInterval(interval);
-          athlete=data;
-          await launch();
-          return;
-        }
-      }
-    }catch(e){}
-    await new Promise(res=>setTimeout(res,3000));
-    secs+=3;
+async function connect(){
+  const k=document.getElementById('key-inp').value.trim();
+  if(!k)return;
+  const btn=document.getElementById('conn-btn');
+  btn.disabled=true;btn.textContent='CONNEXION...';
+  document.getElementById('setup-err').style.display='none';
+  apiKey=k;
+  const r=await icuFetch('');
+  if(!r){
+    apiKey='';
+    document.getElementById('setup-err').style.display='block';
+    btn.disabled=false;btn.textContent='CONNECTER';return;
   }
-}
-
-async function retryConnect(){
-  startApp();
+  localStorage.setItem('ob2g_key',k);
+  athlete=r;await launch();
 }
 
 window.onload=async()=>{
   document.getElementById('profile-bar').style.display='none';
   document.getElementById('health-bar').style.display='none';
-  startApp();
+  const saved=localStorage.getItem('ob2g_key');
+  if(saved){
+    document.getElementById('key-inp').value=saved;
+    apiKey=saved;
+    const r=await icuFetch('');
+    if(r){athlete=r;await launch();return;}
+  }
 };
 </script>
 </body>
