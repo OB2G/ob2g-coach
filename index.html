@@ -185,6 +185,45 @@ html,body{height:100%;background:var(--black);color:var(--cream);font-family:var
 .wg-nums{display:flex;justify-content:space-between;font-size:11px;color:var(--cream4);margin-bottom:6px;}
 .wg-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
 .wg-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--green),var(--amber));transition:width .8s;}
+
+/* PROFIL MODAL */
+.modal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.88);display:none;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;}
+.modal.open{display:flex;}
+.m-card{width:100%;max-width:380px;background:var(--card);border:1px solid var(--border2);border-radius:16px;padding:22px;margin:auto;}
+.m-title{font-family:var(--font-h);font-size:26px;letter-spacing:.06em;color:var(--cream);margin-bottom:4px;}
+.m-sub{font-size:12px;color:var(--cream3);margin-bottom:20px;}
+.m-section{font-size:10px;font-weight:600;color:var(--cream3);text-transform:uppercase;letter-spacing:.12em;margin:16px 0 8px;font-family:var(--font-sub);}
+.m-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.m-row.full{grid-template-columns:1fr;}
+.m-field{display:flex;flex-direction:column;gap:4px;}
+.m-lbl{font-size:10px;color:var(--cream3);text-transform:uppercase;letter-spacing:.08em;font-family:var(--font-sub);}
+.m-inp{padding:10px 12px;background:var(--card2);border:1px solid var(--border2);border-radius:8px;color:var(--cream);font-family:var(--font-body);font-size:14px;outline:none;width:100%;}
+.m-inp:focus{border-color:var(--cream2);}
+.m-inp.mono{font-family:var(--font-h);font-size:20px;text-align:center;}
+.m-inp.big{font-family:var(--font-h);font-size:28px;text-align:center;padding:14px;}
+.m-zones{background:var(--card2);border-radius:8px;padding:10px 12px;margin:10px 0;}
+.fz-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:4px 0;border-bottom:1px solid var(--border);}
+.fz-row:last-child{border-bottom:none;}
+.fz-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-right:6px;}
+.fz-n{color:var(--cream3);font-family:var(--font-sub);letter-spacing:.04em;display:flex;align-items:center;}
+.fz-v{color:var(--cream);font-weight:500;font-size:11px;}
+.fz-accent{color:var(--green)!important;}
+.m-btns{display:flex;gap:8px;margin-top:20px;}
+.m-cancel{flex:1;padding:12px;background:none;border:1px solid var(--border2);border-radius:8px;color:var(--cream3);font-family:var(--font-body);font-size:14px;cursor:pointer;}
+.m-save{flex:2;padding:12px;background:var(--cream);border:none;border-radius:8px;color:var(--black);font-family:var(--font-h);font-size:17px;letter-spacing:.08em;cursor:pointer;}
+.dispo-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:8px 0;}
+.dispo-day{display:flex;flex-direction:column;align-items:center;gap:3px;}
+.dispo-lbl{font-size:9px;color:var(--cream4);text-transform:uppercase;font-family:var(--font-sub);}
+.dispo-chip{width:32px;height:32px;border-radius:8px;border:1px solid var(--border2);background:var(--card2);color:var(--cream4);font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:var(--font-sub);}
+.dispo-chip.on{background:rgba(76,175,125,.2);border-color:var(--green);color:var(--green);}
+.dispo-chip.on.key{background:rgba(232,224,204,.12);border-color:var(--cream2);color:var(--cream2);}
+/* PROFILE BAR */
+#profile-bar{display:none;gap:12px;padding:8px 14px;background:var(--dark);border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;align-items:center;}
+#profile-bar::-webkit-scrollbar{display:none;}
+.pb-item{display:flex;flex-direction:column;align-items:center;gap:1px;flex-shrink:0;}
+.pb-val{font-family:var(--font-h);font-size:16px;color:var(--cream);letter-spacing:.02em;line-height:1;}
+.pb-lbl{font-size:9px;color:var(--cream4);text-transform:uppercase;letter-spacing:.08em;font-family:var(--font-sub);}
+.pb-sep{width:1px;background:var(--border2);align-self:stretch;flex-shrink:0;}
 </style>
 </head>
 <body>
@@ -289,6 +328,77 @@ html,body{height:100%;background:var(--black);color:var(--cream);font-family:var
   </div>
 </div>
 
+<!-- PROFIL MODAL -->
+<div class="modal" id="modal-profil">
+  <div class="m-card">
+    <div class="m-title">MON PROFIL</div>
+    <div class="m-sub">Données utilisées par le coach</div>
+    <div class="m-section">Identité</div>
+    <div class="m-row">
+      <div class="m-field"><div class="m-lbl">Prénom</div><input class="m-inp" type="text" id="p-prenom" placeholder="Fabien"/></div>
+      <div class="m-field"><div class="m-lbl">Âge</div><input class="m-inp" type="number" id="p-age" placeholder="50"/></div>
+    </div>
+    <div class="m-row">
+      <div class="m-field"><div class="m-lbl">Taille (cm)</div><input class="m-inp" type="number" id="p-taille" placeholder="180"/></div>
+      <div class="m-field"><div class="m-lbl">Poids actuel (kg)</div><input class="m-inp" type="number" id="p-poids" placeholder="95" oninput="updateWkg()"/></div>
+    </div>
+    <div class="m-row">
+      <div class="m-field"><div class="m-lbl">Poids cible (kg)</div><input class="m-inp" type="number" id="p-cible" placeholder="75"/></div>
+      <div class="m-field"><div class="m-lbl">W/kg actuel</div><div class="m-inp" id="p-wkg" style="background:var(--black);cursor:default;color:var(--green);font-size:18px;font-family:var(--font-h);text-align:center;padding:9px 12px;">—</div></div>
+    </div>
+    <div class="m-section">Cardio & Puissance</div>
+    <div class="m-row">
+      <div class="m-field"><div class="m-lbl">FC max (bpm)</div><input class="m-inp mono" type="number" id="p-fcmax" placeholder="165" oninput="updateZones()"/></div>
+      <div class="m-field"><div class="m-lbl">FC repos (bpm)</div><input class="m-inp mono" type="number" id="p-fcrep" placeholder="55" oninput="updateZones()"/></div>
+    </div>
+    <div class="m-row full">
+      <div class="m-field"><div class="m-lbl">FTP (watts)</div><input class="m-inp big" type="number" id="p-ftp" placeholder="160" oninput="updateZones();updateWkg()"/></div>
+    </div>
+    <div class="m-zones" id="p-zones"></div>
+    <div class="m-section">Disponibilités · Clique = dispo · Double = séance clé</div>
+    <div class="dispo-grid" id="dispo-grid"></div>
+    <div class="m-section">Objectifs</div>
+    <div class="m-row full">
+      <div class="m-field"><div class="m-lbl">Objectif principal</div>
+        <select class="m-inp" id="p-objectif">
+          <option value="perte_poids">Perte de poids + remise en forme</option>
+          <option value="endurance">Développer l'endurance</option>
+          <option value="performance">Retrouver le niveau compétition</option>
+          <option value="sante">Santé et bien-être</option>
+        </select>
+      </div>
+    </div>
+    <div class="m-row">
+      <div class="m-field"><div class="m-lbl">Heures/sem</div><input class="m-inp mono" type="number" id="p-hweek" placeholder="5"/></div>
+      <div class="m-field"><div class="m-lbl">Phase</div>
+        <select class="m-inp" id="p-phase" style="font-size:13px;">
+          <option value="1">Phase 1 · Reprise</option>
+          <option value="2">Phase 2 · Base</option>
+          <option value="3">Phase 3 · Construction</option>
+        </select>
+      </div>
+    </div>
+    <div class="m-btns">
+      <button class="m-cancel" onclick="closeModal('modal-profil')">Annuler</button>
+      <button class="m-save" onclick="saveProfil()">SAUVEGARDER</button>
+    </div>
+  </div>
+</div>
+
+<!-- FTP RAPIDE MODAL -->
+<div class="modal" id="modal-ftp">
+  <div class="m-card">
+    <div class="m-title">FTP RAPIDE</div>
+    <div class="m-sub">Puissance seuil fonctionnel</div>
+    <div class="m-row full"><div class="m-field"><div class="m-lbl">FTP (watts)</div><input class="m-inp big" type="number" id="ftp-quick" placeholder="160" oninput="updateQuickZones()"/></div></div>
+    <div class="m-zones" id="ftp-quick-zones"></div>
+    <div class="m-btns">
+      <button class="m-cancel" onclick="closeModal('modal-ftp')">Annuler</button>
+      <button class="m-save" onclick="saveFtpQuick()">SAUVEGARDER</button>
+    </div>
+  </div>
+</div>
+
 <!-- APP -->
 <div id="screen-app">
   <div id="hdr">
@@ -305,6 +415,7 @@ html,body{height:100%;background:var(--black);color:var(--cream);font-family:var
 
   <div id="profile-bar"><!-- populated by JS --></div>
 
+  <div id="profile-bar"></div>
   <div id="tabs">
     <button class="tab active" onclick="goTab('chat')">💬 Coach</button>
     <button class="tab" onclick="goTab('calendar')">📅 Calendrier</button>
@@ -346,6 +457,120 @@ const MONTHS=['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov
 const ZCOLORS={z1:'#3a6ea8',z2:'#4caf7d',z3:'#c8c22a',z4:'#c8922a',z5:'#c84040'};
 const ZH={z1:.35,z2:.65,z3:.80,z4:.92,z5:1.0};
 const PROXY='https://ob2g-proxy.onrender.com';
+
+// ── PROFIL ──
+function defaultProfil(){return{prenom:'',age:'',taille:'',poids:'',cible:'',fcmax:165,fcrep:55,ftp:160,objectif:'perte_poids',hweek:5,phase:'1',dispos:[]};}
+function loadProfil(){try{return{...defaultProfil(),...JSON.parse(localStorage.getItem('ob2g_profil')||'{}')};}catch(e){return defaultProfil();}}
+
+function buildDispoGrid(){
+  const p=loadProfil(),dispos=p.dispos||[];
+  const days=['LUN','MAR','MER','JEU','VEN','SAM','DIM'];
+  document.getElementById('dispo-grid').innerHTML=days.map((d,i)=>{
+    const st=dispos[i]||0;
+    return`<div class="dispo-day"><div class="dispo-lbl">${d}</div>
+      <div class="dispo-chip${st>0?' on':''}${st===2?' key':''}" onclick="toggleDispo(${i})" ondblclick="toggleDispoKey(${i})">
+        ${st===2?'★':st===1?'✓':'—'}</div></div>`;
+  }).join('');
+}
+function toggleDispo(i){const p=loadProfil();if(!p.dispos)p.dispos=new Array(7).fill(0);p.dispos[i]=p.dispos[i]===0?1:0;localStorage.setItem('ob2g_profil',JSON.stringify(p));buildDispoGrid();}
+function toggleDispoKey(i){const p=loadProfil();if(!p.dispos)p.dispos=new Array(7).fill(0);p.dispos[i]=p.dispos[i]===2?1:2;localStorage.setItem('ob2g_profil',JSON.stringify(p));buildDispoGrid();}
+
+function updateWkg(){
+  const w=parseFloat(document.getElementById('p-poids').value);
+  const v=parseInt(document.getElementById('p-ftp').value)||ftp;
+  document.getElementById('p-wkg').textContent=w&&v?(v/w).toFixed(2)+' W/kg':'—';
+}
+function updateZones(){
+  const v=parseInt(document.getElementById('p-ftp').value)||ftp;
+  const fcmax=parseInt(document.getElementById('p-fcmax').value)||165;
+  const fcrep=parseInt(document.getElementById('p-fcrep').value)||55;
+  const res=fcmax-fcrep;
+  const zones=[
+    {n:'Z1  Récup',c:'#3a6ea8',pw:`${Math.round(v*.45)}–${Math.round(v*.55)}W`,hr:`${Math.round(fcrep+res*.5)}–${Math.round(fcrep+res*.6)}bpm`},
+    {n:'Z2  Endurance',c:'#4caf7d',pw:`${Math.round(v*.56)}–${Math.round(v*.75)}W`,hr:`${Math.round(fcrep+res*.6)}–${Math.round(fcrep+res*.7)}bpm`,a:true},
+    {n:'Z3  Tempo',c:'#c8c22a',pw:`${Math.round(v*.76)}–${Math.round(v*.87)}W`,hr:`${Math.round(fcrep+res*.7)}–${Math.round(fcrep+res*.8)}bpm`},
+    {n:'Z4  Seuil',c:'#c8922a',pw:`${Math.round(v*.88)}–${Math.round(v*.94)}W`,hr:`${Math.round(fcrep+res*.8)}–${Math.round(fcrep+res*.9)}bpm`},
+    {n:'Z5  VO2Max',c:'#c84040',pw:`>${Math.round(v*.95)}W`,hr:`>${Math.round(fcrep+res*.9)}bpm`},
+  ];
+  document.getElementById('p-zones').innerHTML=zones.map(z=>
+    `<div class="fz-row"><span class="fz-n"><span class="fz-dot" style="background:${z.c}"></span>${z.n}</span><span class="fz-v${z.a?' fz-accent':''}">${z.pw} · ${z.hr}</span></div>`).join('');
+}
+function updateQuickZones(){
+  const v=parseInt(document.getElementById('ftp-quick').value)||ftp;
+  document.getElementById('ftp-quick-zones').innerHTML=[
+    {n:'Z1',c:'#3a6ea8',pw:`${Math.round(v*.45)}–${Math.round(v*.55)}W`},
+    {n:'Z2',c:'#4caf7d',pw:`${Math.round(v*.56)}–${Math.round(v*.75)}W`,a:true},
+    {n:'Z3',c:'#c8c22a',pw:`${Math.round(v*.76)}–${Math.round(v*.87)}W`},
+    {n:'Z4',c:'#c8922a',pw:`${Math.round(v*.88)}–${Math.round(v*.94)}W`},
+    {n:'Z5',c:'#c84040',pw:`>${Math.round(v*.95)}W`},
+  ].map(z=>`<div class="fz-row"><span class="fz-n"><span class="fz-dot" style="background:${z.c}"></span>${z.n}</span><span class="fz-v${z.a?' fz-accent':''}">${z.pw}</span></div>`).join('');
+}
+
+function saveProfil(){
+  const p={
+    prenom:document.getElementById('p-prenom').value.trim(),
+    age:parseInt(document.getElementById('p-age').value)||'',
+    taille:parseInt(document.getElementById('p-taille').value)||'',
+    poids:parseFloat(document.getElementById('p-poids').value)||'',
+    cible:parseFloat(document.getElementById('p-cible').value)||'',
+    fcmax:parseInt(document.getElementById('p-fcmax').value)||165,
+    fcrep:parseInt(document.getElementById('p-fcrep').value)||55,
+    ftp:parseInt(document.getElementById('p-ftp').value)||160,
+    objectif:document.getElementById('p-objectif').value,
+    hweek:parseInt(document.getElementById('p-hweek').value)||5,
+    phase:document.getElementById('p-phase').value,
+    dispos:loadProfil().dispos||[],
+  };
+  localStorage.setItem('ob2g_profil',JSON.stringify(p));
+  ftp=p.ftp;updateFtpDisplay();renderProfileBar();
+  closeModal('modal-profil');
+  addMsg('coach',`Profil mis à jour ✓ FTP ${p.ftp}W · Z2 : ${z2min()}–${z2max()}W${p.poids&&p.cible?' · Objectif -'+(p.poids-p.cible).toFixed(1)+'kg':''}`);
+}
+
+function saveFtpQuick(){
+  const v=parseInt(document.getElementById('ftp-quick').value);
+  if(!v||v<50||v>500)return;
+  const p=loadProfil();p.ftp=v;
+  localStorage.setItem('ob2g_profil',JSON.stringify(p));
+  ftp=v;updateFtpDisplay();renderProfileBar();
+  closeModal('modal-ftp');
+  addMsg('coach',`FTP → ${v}W · Z2 : ${z2min()}–${z2max()}W${p.poids?' · W/kg : '+(v/p.poids).toFixed(2):''} ✓`);
+}
+
+function openModal(id){
+  if(id==='modal-profil'){
+    const p=loadProfil();
+    ['prenom','age','taille','poids','cible'].forEach(k=>{const el=document.getElementById('p-'+k);if(el)el.value=p[k]||'';});
+    document.getElementById('p-fcmax').value=p.fcmax||165;
+    document.getElementById('p-fcrep').value=p.fcrep||55;
+    document.getElementById('p-ftp').value=p.ftp||ftp;
+    document.getElementById('p-objectif').value=p.objectif||'perte_poids';
+    document.getElementById('p-hweek').value=p.hweek||5;
+    document.getElementById('p-phase').value=p.phase||'1';
+    updateZones();updateWkg();buildDispoGrid();
+  }
+  if(id==='modal-ftp'){
+    document.getElementById('ftp-quick').value=ftp;
+    updateQuickZones();
+  }
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+function renderProfileBar(){
+  const p=loadProfil();
+  const el=document.getElementById('profile-bar');
+  if(!p.poids&&!p.age){el.style.display='none';return;}
+  el.style.display='flex';
+  let h='';
+  if(p.prenom)h+=`<div class="pb-item"><div class="pb-val" style="font-family:var(--font-h);font-size:14px">${p.prenom.toUpperCase()}</div><div class="pb-lbl">Rider</div></div><div class="pb-sep"></div>`;
+  if(p.poids)h+=`<div class="pb-item"><div class="pb-val">${p.poids}<span style="font-size:10px;color:var(--cream4)">kg</span></div><div class="pb-lbl">Poids</div></div>`;
+  if(p.cible&&p.poids)h+=`<div class="pb-sep"></div><div class="pb-item"><div class="pb-val" style="color:var(--amber)">-${(p.poids-p.cible).toFixed(1)}<span style="font-size:10px">kg</span></div><div class="pb-lbl">Objectif</div></div>`;
+  if(p.poids&&ftp)h+=`<div class="pb-sep"></div><div class="pb-item"><div class="pb-val" style="color:var(--green)">${(ftp/p.poids).toFixed(2)}</div><div class="pb-lbl">W/kg</div></div>`;
+  if(p.fcmax)h+=`<div class="pb-sep"></div><div class="pb-item"><div class="pb-val">${p.fcmax}<span style="font-size:10px;color:var(--cream4)">bpm</span></div><div class="pb-lbl">FC max</div></div>`;
+  h+=`<div class="pb-sep"></div><div class="pb-item"><div class="pb-val" style="font-size:13px;color:var(--cream2)">P${p.phase||1}</div><div class="pb-lbl">Phase</div></div>`;
+  el.innerHTML=h;
+}
 
 // ── PROFIL ──
 function defaultProfil(){
