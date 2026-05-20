@@ -265,7 +265,7 @@ html,body{height:100%;background:var(--black);color:var(--cream);font-family:var
       </div>
       <div class="m-field">
         <div class="m-lbl">Poids actuel (kg)</div>
-        <input class="m-inp" type="number" id="p-poids" placeholder="95" min="40" max="200" oninput="updateIMC()"/>
+        <input class="m-inp" type="number" id="p-poids" placeholder="95" min="40" max="200" oninput="updateWkg()"/>
       </div>
     </div>
     <div class="m-row">
@@ -599,19 +599,7 @@ function saveProfil(){
   addMsg('coach','Profil mis à jour ✓ — FTP '+p.ftp+'W · Z2 : '+z2min()+'–'+z2max()+'W · '+(p.poids&&p.cible?'Objectif : -'+(p.poids-p.cible).toFixed(1)+'kg':''));
 }
 
-function openProfilModal(){
-  const p=loadProfil();
-  document.getElementById('p-prenom').value=p.prenom||'';
-  document.getElementById('p-age').value=p.age||'';
-  document.getElementById('p-taille').value=p.taille||'';
-  document.getElementById('p-poids').value=p.poids||'';
-  document.getElementById('p-cible').value=p.cible||'';
-  document.getElementById('p-fcmax').value=p.fcmax||165;
-  document.getElementById('p-fcrep').value=p.fcrep||55;
-  document.getElementById('p-ftp').value=p.ftp||ftp;
-  updateZones();updateIMC();
-  openModal('modal-profil');
-}
+
 
 
 
