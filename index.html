@@ -615,7 +615,13 @@ async function fetchHealthData(){
   try{
     const r=await fetch(PROXY+'/health');
     const d=await r.json();
-    if(d&&Object.keys(d).length>1){healthData=d;renderHealthBar();}
+    // Gère les deux formats possibles
+    const data=d?.health||d;
+    if(data&&Object.keys(data).length>1){
+      healthData=data;
+      renderHealthBar();
+      renderData();
+    }
   }catch(e){}
 }
 function renderHealthBar(){
