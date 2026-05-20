@@ -1502,14 +1502,35 @@ window.onload=async()=>{
   document.getElementById('profile-bar').style.display='none';
   document.getElementById('health-bar').style.display='none';
 
-  // Essayer de récupérer la clé depuis JSONBin d'abord
+  const loadingEl=document.getElementById('setup-loading');
+  const errEl=document.getElementById('setup-err');
+  const btn=document.getElementById('conn-btn');
+
+  // Fonction avec timeout
+  async function fetchWithTimeout(url, opts={}, ms=8000){
+    const controller=new AbortController();
+    const tid=setTimeout(()=>controller.abort(),ms);
+    try{
+      const r=await fetch(url,{...opts,signal:controller.signal});
+      clearTimeout(tid);
+      return r;
+    }catch(e){
+      clearTimeout(tid);
+      throw e;
+    }
+  }
+
+  // Essayer JSONBin d'abord
   try{
-    const r=await fetch(PROXY+'/store/key');
+    loadingEl.style.display='block';
+    loadingEl.textContent='Connexion automatique...';
+    btn.disabled=true;
+
+    const r=await fetchWithTimeout(PROXY+'/store/key',{},6000);
     const d=await r.json();
+
     if(d&&d.key){
       document.getElementById('key-inp').value=d.key;
-      document.getElementById('setup-loading').style.display='block';
-      document.getElementById('setup-loading').textContent='Connexion automatique...';
       apiKey=d.key;
       const athlete_r=await icuFetch('');
       if(athlete_r){
@@ -1518,11 +1539,28 @@ window.onload=async()=>{
         return;
       }
     }
-  }catch(e){}
+  }catch(e){
+    console.log('JSONBin timeout ou erreur:', e.message);
+  }
 
   // Sinon essayer localStorage
   const saved=localStorage.getItem('ob2g_key');
-  if(saved){document.getElementById('key-inp').value=saved;connect();}
+  if(saved){
+    document.getElementById('key-inp').value=saved;
+    apiKey=saved;
+    const athlete_r=await icuFetch('');
+    if(athlete_r){
+      athlete=athlete_r;
+      await launch();
+      return;
+    }
+  }
+
+  // Echec — afficher le formulaire
+  loadingEl.style.display='none';
+  btn.disabled=false;
+  errEl.style.display='block';
+  errEl.textContent='Connexion automatique échouée — entre ta clé manuellement.';
 };
 </script>
 </body>
