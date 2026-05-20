@@ -1505,12 +1505,20 @@ async function connect(){
 window.onload=async()=>{
   document.getElementById('profile-bar').style.display='none';
   document.getElementById('health-bar').style.display='none';
-  const saved=localStorage.getItem('ob2g_key');
-  if(saved){
-    document.getElementById('key-inp').value=saved;
-    apiKey=saved;
-    const r=await icuFetch('');
-    if(r){athlete=r;await launch();return;}
+  // Clé pré-remplie
+  const KEY='2ow79kzygxtvhcc6i2o6b4u8h';
+  const saved=localStorage.getItem('ob2g_key')||KEY;
+  document.getElementById('key-inp').value=saved;
+  // Tentative connexion auto silencieuse
+  apiKey=saved;
+  const btn=document.getElementById('conn-btn');
+  btn.disabled=true;btn.textContent='CONNEXION...';
+  const r=await icuFetch('');
+  if(r){
+    localStorage.setItem('ob2g_key',saved);
+    athlete=r;await launch();
+  } else {
+    btn.disabled=false;btn.textContent='CONNECTER';
   }
 };
 </script>
