@@ -605,7 +605,10 @@ async function icuFetch(path,method='GET',body=null){
   const opts={method,headers:{'Content-Type':'application/json','x-api-key':apiKey}};
   if(body)opts.body=JSON.stringify(body);
   try{
-    const r=await fetch(PROXY+'/api'+path,opts);
+    const controller=new AbortController();
+    const tid=setTimeout(()=>controller.abort(),25000);
+    const r=await fetch(PROXY+'/api'+path,{...opts,signal:controller.signal});
+    clearTimeout(tid);
     if(!r.ok)return null;
     if(method==='DELETE')return true;
     return r.json();
