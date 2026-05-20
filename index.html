@@ -1493,43 +1493,59 @@ async function briefingAvantSeance(){
   }, 500);
 }
 
-async function tryConnect(msg='Connexion...'){
+function setLoadingText(t){
+  const el=document.getElementById('setup-loading');
+  if(el)el.textContent=t;
+}
+
+async function startApp(){
+  apiKey='2ow79kzygxtvhcc6i2o6b4u8h';
   document.getElementById('setup-loading-wrap').style.display='block';
   document.getElementById('setup-err-wrap').style.display='none';
-  apiKey='2ow79kzygxtvhcc6i2o6b4u8h';
 
-  // Essaie jusqu'à 6 fois avec 10s entre chaque
-  for(let i=0;i<6;i++){
-    document.getElementById('setup-loading').textContent=i===0?msg:('Proxy en démarrage... '+(i*10)+'s');
-    try{
-      // 1. Tester que le proxy répond
-      const controller=new AbortController();
-      const tid=setTimeout(()=>controller.abort(),8000);
-      const ping=await fetch(PROXY+'/',{signal:controller.signal});
-      clearTimeout(tid);
-      if(!ping.ok){await new Promise(res=>setTimeout(res,10000));continue;}
-
-      // 2. Proxy OK — connecter Intervals.icu
-      document.getElementById('setup-loading').textContent='Intervals.icu...';
-      const r=await icuFetch('');
-      if(r){athlete=r;await launch();return;}
-    }catch(e){
-      // Proxy pas encore réveillé
+  let secs=0;
+  // Polling toutes les 3 secondes jusqu'à 90s max
+  const interval=setInterval(async()=>{
+    secs+=3;
+    if(secs<=10) setLoadingText('Connexion...');
+    else setLoadingText('Démarrage du serveur... '+secs+'s');
+    if(secs>=90){
+      clearInterval(interval);
+      document.getElementById('setup-loading-wrap').style.display='none';
+      document.getElementById('setup-err-wrap').style.display='block';
     }
-    if(i<5) await new Promise(res=>setTimeout(res,10000));
+  },3000);
+
+  // Tenter la connexion en boucle
+  while(secs<90){
+    try{
+      const r=await fetch(PROXY+'/api',{
+        method:'GET',
+        headers:{'Content-Type':'application/json','x-api-key':apiKey}
+      });
+      if(r.ok){
+        const data=await r.json();
+        if(data&&data.id){
+          clearInterval(interval);
+          athlete=data;
+          await launch();
+          return;
+        }
+      }
+    }catch(e){}
+    await new Promise(res=>setTimeout(res,3000));
+    secs+=3;
   }
-  document.getElementById('setup-loading-wrap').style.display='none';
-  document.getElementById('setup-err-wrap').style.display='block';
 }
 
 async function retryConnect(){
-  tryConnect('Reconnexion');
+  startApp();
 }
 
 window.onload=async()=>{
   document.getElementById('profile-bar').style.display='none';
   document.getElementById('health-bar').style.display='none';
-  tryConnect('Connexion');
+  startApp();
 };
 </script>
 </body>
