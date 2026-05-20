@@ -613,36 +613,9 @@ function openProfilModal(){
   openModal('modal-profil');
 }
 
-function updateIMC(){
-  const t=parseFloat(document.getElementById('p-taille').value);
-  const w=parseFloat(document.getElementById('p-poids').value);
-  const el=document.getElementById('p-imc');
-  if(t&&w){
-    const imc=(w/((t/100)**2)).toFixed(1);
-    const cat=imc<18.5?'Maigre':imc<25?'Normal':imc<30?'Surpoids':'Obésité';
-    el.textContent=imc+' · '+cat;
-  } else {el.textContent='—';}
-}
 
-function updateZones(){
-  const ftpV=parseInt(document.getElementById('p-ftp').value)||ftp;
-  const fcmax=parseInt(document.getElementById('p-fcmax').value)||165;
-  const fcrep=parseInt(document.getElementById('p-fcrep').value)||55;
-  const res=fcmax-fcrep;
-  const zones=[
-    {n:'Z1  Récupération',color:'#3a6ea8',pw:Math.round(ftpV*.45)+'–'+Math.round(ftpV*.55)+'W',hr:Math.round(fcrep+res*.5)+' – '+Math.round(fcrep+res*.6)+'bpm',accent:false},
-    {n:'Z2  Endurance',color:'#4caf7d',pw:Math.round(ftpV*.56)+'–'+Math.round(ftpV*.75)+'W',hr:Math.round(fcrep+res*.6)+' – '+Math.round(fcrep+res*.7)+'bpm',accent:true},
-    {n:'Z3  Tempo',color:'#c8c22a',pw:Math.round(ftpV*.76)+'–'+Math.round(ftpV*.87)+'W',hr:Math.round(fcrep+res*.7)+' – '+Math.round(fcrep+res*.8)+'bpm',accent:false},
-    {n:'Z4  Seuil',color:'#c8922a',pw:Math.round(ftpV*.88)+'–'+Math.round(ftpV*.94)+'W',hr:Math.round(fcrep+res*.8)+' – '+Math.round(fcrep+res*.9)+'bpm',accent:false},
-    {n:'Z5  VO2Max',color:'#c84040',pw:'>'+Math.round(ftpV*.95)+'W',hr:'>'+Math.round(fcrep+res*.9)+'bpm',accent:false},
-  ];
-  document.getElementById('p-zones').innerHTML=zones.map(z=>
-    `<div class="fz-row">
-      <span class="fz-n"><span class="fz-dot" style="background:${z.color}"></span>${z.n}</span>
-      <span class="fz-v${z.accent?' fz-accent':''}" style="font-size:11px">${z.pw} · ${z.hr}</span>
-    </div>`
-  ).join('');
-}
+
+
 
 function updateQuickZones(){
   const v=parseInt(document.getElementById('ftp-quick').value)||ftp;
