@@ -737,9 +737,31 @@ function renderMonth(){
 }
 
 function goWeekDay(ds){
-  const done=activities.filter(a=>(a.start_date_local||'').startsWith(ds));
+  // Activité réalisée → analyse
+  const done=activities.filter(a=>(a.start_date_local||'').startsWith(ds)&&!(a.source==='STRAVA'&&!a.moving_time));
   if(done.length){ showActDetail(done[0].id); return; }
-  calView='week'; renderCal();
+
+  // Événement planifié ce jour
+  const planned=events.filter(e=>(e.start_date_local||'').startsWith(ds)&&e.category==='WORKOUT');
+  if(planned.length){
+    const isPast=ds<today();
+    document.getElementById('act-title').textContent=planned[0].name||'Séance';
+    document.getElementById('act-sub').textContent=ds+(isPast?' · Non réalisée':' · Planifiée');
+    const dur=planned[0].moving_time?Math.round(planned[0].moving_time/60):null;
+    const blocks=parseBlocks(planned[0].description)||guessBlocks(planned[0].name,dur);
+    document.getElementById('act-content').innerHTML=`
+      <div class="wv" id="planned-wv" style="height:50px;border-radius:8px;background:var(--card2);margin-bottom:10px;"></div>
+      <div class="wvl" style="margin-bottom:12px;">${zLabels(blocks)}</div>
+      ${dur?`<div class="cmp-row"><div class="cmp-box"><div class="cmp-lbl">Durée prévue</div><div class="cmp-val">${dur}'</div></div></div>`:''}
+      ${isPast?`<div class="act-alert" style="color:var(--amber);background:rgba(200,146,42,.1);border-color:rgba(200,146,42,.2);">
+        ⚠️ Séance non réalisée — pas d'activité enregistrée ce jour.</div>`:''}
+    `;
+    document.getElementById('mact').classList.add('open');
+    setTimeout(()=>drawWV('planned-wv',blocks),50);
+    return;
+  }
+
+  // Rien → rester en vue mois
 }
 
 
