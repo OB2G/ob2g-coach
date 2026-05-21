@@ -229,6 +229,12 @@ html,body{height:100%;background:var(--black);color:var(--cream);font-family:var
 .act-alert.ok{color:var(--green);background:rgba(76,175,125,.1);border-color:rgba(76,175,125,.2);}
 .act-alert.warn{color:var(--red);background:rgba(200,64,64,.1);border-color:rgba(200,64,64,.2);}
 
+/* HEALTH BAR */
+#hbar::-webkit-scrollbar{display:none;}
+.hb-i{display:flex;flex-direction:column;align-items:center;flex-shrink:0;}
+.hb-v{font-family:var(--font-h);font-size:14px;color:var(--teal);}
+.hb-l{font-size:9px;color:var(--cream4);text-transform:uppercase;letter-spacing:.06em;font-family:var(--font-sub);}
+.hb-s{width:1px;height:20px;background:rgba(58,152,152,.3);flex-shrink:0;}
 /* DATA */
 .sg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
 .sc{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;}
@@ -365,9 +371,10 @@ html,body{height:100%;background:var(--black);color:var(--cream);font-family:var
     </div>
   </div>
   <div id="pbar"></div>
+  <div id="hbar" style="display:none;gap:8px;padding:6px 14px;background:rgba(58,152,152,.08);border-bottom:1px solid rgba(58,152,152,.2);flex-shrink:0;overflow-x:auto;align-items:center;"></div>
   <div id="tabs">
     <button class="tab on" onclick="goTab(0)">💬 Coach</button>
-    <button class="tab" onclick="goTab(1)">📅 Cal.</button>
+    <button class="tab" onclick="goTab(1)">📅 Calendrier</button>
     <button class="tab" onclick="goTab(2)">📊 Stats</button>
   </div>
   <div id="panels">
@@ -408,7 +415,7 @@ const ZH={z1:.35,z2:.65,z3:.80,z4:.92,z5:1.0};
 
 // ── STATE ──
 let apiKey='', ftp=160, athlete=null, activities=[], events=[], history=[], busy=false;
-let calView='week', calMonth=new Date();
+let calView='week', calMonth=new Date(), healthData=null;
 
 // ── UTILS ──
 const fd = d => d.toISOString().split('T')[0];
@@ -589,6 +596,7 @@ async function launch(){
   if(acts&&Array.isArray(acts)) activities=acts;
   if(evs&&Array.isArray(evs)) events=evs;
   renderCal(); renderData();
+  fetchHealth();
   const fn=p.prenom||(athlete.name||'').split(' ')[0]||'Rider';
   const planned=events.filter(e=>(e.start_date_local||'').split('T')[0]>=today()&&e.category==='WORKOUT').length;
   const tsb=Math.round((athlete.icu_ctl||0)-(athlete.icu_atl||0));
@@ -633,6 +641,40 @@ function zLabels(blocks){
   const seen=new Set();
   return blocks.filter(b=>{if(seen.has(b.z))return false;seen.add(b.z);return true;})
     .map(b=>`<span class="wvli"><span class="wvld" style="background:${ZC[b.z]}"></span>${b.z.toUpperCase()}</span>`).join('');
+}
+
+// ── APPLE SANTÉ ──
+async function fetchHealth(){
+  try{
+    const r=await fetch(PROXY+'/health');
+    const d=await r.json();
+    if(d&&Object.keys(d).length>1){
+      healthData=d;
+      renderHbar();
+    }
+  }catch(e){}
+}
+
+function renderHbar(){
+  const el=document.getElementById('hbar');
+  if(!healthData||Object.keys(healthData).length<=1){el.style.display='none';return;}
+  el.style.display='flex';
+  const p=getProfil();
+  let h='<span style="font-size:11px;color:var(--teal);flex-shrink:0">🍎</span>';
+  if(healthData.sleep_hours){
+    const ok=healthData.sleep_hours>=7;
+    h+=`<div class="hb-i"><div class="hb-v" style="color:${ok?'var(--green)':'var(--amber)'}">${healthData.sleep_hours}h</div><div class="hb-l">Sommeil</div></div><div class="hb-s"></div>`;
+  }
+  if(healthData.resting_hr){
+    const norm=p.fcrep||55;
+    const ok=healthData.resting_hr<=norm+5;
+    h+=`<div class="hb-i"><div class="hb-v" style="color:${ok?'var(--teal)':'var(--amber)'}">${healthData.resting_hr}</div><div class="hb-l">FC repos</div></div><div class="hb-s"></div>`;
+  }
+  if(healthData.hrv) h+=`<div class="hb-i"><div class="hb-v">${healthData.hrv}</div><div class="hb-l">HRV</div></div><div class="hb-s"></div>`;
+  if(healthData.systolic) h+=`<div class="hb-i"><div class="hb-v" style="font-size:12px">${healthData.systolic}/${healthData.diastolic}</div><div class="hb-l">Tension</div></div><div class="hb-s"></div>`;
+  if(healthData.steps) h+=`<div class="hb-i"><div class="hb-v">${(healthData.steps/1000).toFixed(1)}k</div><div class="hb-l">Pas</div></div><div class="hb-s"></div>`;
+  if(healthData.weight) h+=`<div class="hb-i"><div class="hb-v">${healthData.weight}</div><div class="hb-l">Poids</div></div>`;
+  el.innerHTML=h;
 }
 
 // ── CALENDAR ──
@@ -977,7 +1019,22 @@ function renderData(){
   const tsbC=tsb>5?'var(--green)':tsb<-20?'var(--red)':'var(--amber)';
   const tsbL=tsb>5?'Frais 💪':tsb<-20?'Fatigué 😴':'Normal';
   const tsbBg=tsb>5?'rgba(76,175,125,.15)':tsb<-20?'rgba(200,64,64,.15)':'rgba(200,146,42,.15)';
-  let h=`<div class="sg">
+  let h='';
+  // Carte Apple Santé
+  if(healthData&&Object.keys(healthData).length>1){
+    h+=`<div style="background:rgba(58,152,152,.08);border:1px solid rgba(58,152,152,.2);border-radius:10px;padding:12px 14px;margin-bottom:12px;">
+      <div style="font-size:10px;color:var(--teal);text-transform:uppercase;letter-spacing:.1em;font-family:var(--font-sub);margin-bottom:8px;">🍎 Apple Santé · ${healthData.date||'Aujourd\'hui'}</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+        ${healthData.sleep_hours?`<div style="text-align:center;background:rgba(58,152,152,.08);border-radius:6px;padding:8px 4px;"><div style="font-family:var(--font-h);font-size:20px;color:${healthData.sleep_hours>=7?'var(--green)':'var(--amber)'}">${healthData.sleep_hours}h</div><div style="font-size:9px;color:var(--cream4);text-transform:uppercase;font-family:var(--font-sub);">Sommeil</div></div>`:''}
+        ${healthData.resting_hr?`<div style="text-align:center;background:rgba(58,152,152,.08);border-radius:6px;padding:8px 4px;"><div style="font-family:var(--font-h);font-size:20px;color:var(--teal)">${healthData.resting_hr}</div><div style="font-size:9px;color:var(--cream4);text-transform:uppercase;font-family:var(--font-sub);">FC repos</div></div>`:''}
+        ${healthData.hrv?`<div style="text-align:center;background:rgba(58,152,152,.08);border-radius:6px;padding:8px 4px;"><div style="font-family:var(--font-h);font-size:20px;color:var(--teal)">${healthData.hrv}</div><div style="font-size:9px;color:var(--cream4);text-transform:uppercase;font-family:var(--font-sub);">HRV</div></div>`:''}
+        ${healthData.systolic?`<div style="text-align:center;background:rgba(58,152,152,.08);border-radius:6px;padding:8px 4px;"><div style="font-family:var(--font-h);font-size:14px;color:var(--teal)">${healthData.systolic}/${healthData.diastolic}</div><div style="font-size:9px;color:var(--cream4);text-transform:uppercase;font-family:var(--font-sub);">Tension</div></div>`:''}
+        ${healthData.steps?`<div style="text-align:center;background:rgba(58,152,152,.08);border-radius:6px;padding:8px 4px;"><div style="font-family:var(--font-h);font-size:20px;color:var(--teal)">${(healthData.steps/1000).toFixed(1)}k</div><div style="font-size:9px;color:var(--cream4);text-transform:uppercase;font-family:var(--font-sub);">Pas</div></div>`:''}
+        ${healthData.weight?`<div style="text-align:center;background:rgba(58,152,152,.08);border-radius:6px;padding:8px 4px;"><div style="font-family:var(--font-h);font-size:20px;color:var(--teal)">${healthData.weight}</div><div style="font-size:9px;color:var(--cream4);text-transform:uppercase;font-family:var(--font-sub);">Poids kg</div></div>`:''}
+      </div>
+    </div>`;
+  }
+  h+=`<div class="sg">
     <div class="sc"><div class="sl">Fitness CTL</div><div class="sv">${ctl}</div><div class="sd">Forme de fond</div><div class="sbar"><div class="sbarf" style="width:${Math.min(ctl,100)}%;background:var(--cream2)"></div></div></div>
     <div class="sc"><div class="sl">Fatigue ATL</div><div class="sv">${atl}</div><div class="sd">Charge récente</div><div class="sbar"><div class="sbarf" style="width:${Math.min(atl,100)}%;background:var(--amber)"></div></div></div>
     <div class="sc"><div class="sl">Forme TSB</div><div class="sv" style="color:${tsbC}">${tsb>=0?'+':''}${tsb}</div><div class="tsbb" style="background:${tsbBg};color:${tsbC}">${tsbL}</div></div>
