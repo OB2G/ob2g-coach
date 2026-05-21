@@ -581,7 +581,7 @@ function renderCal(){
   h += calView==='month' ? renderMonth() : renderWeek();
   h += '<button class="cta" onclick="qs(&quot;Planifie ma semaine selon mes disponibilit&eacute;s et ma forme&quot;)">🧠 Planifier avec le coach ↗</button>';
   el.innerHTML=h;
-  if(calView==='week') setTimeout(drawAllWV, 50);
+  if(calView==='week') setTimeout(drawAllWV2, 50);
 }
 
 function setCalView(v){ calView=v; renderCal(); }
@@ -644,18 +644,7 @@ function renderMonth(){
 
 function goWeekDay(ds){ calView='week'; renderCal(); }
 
-function drawAllWV(){
-  const n=new Date();
-  for(let i=0;i<7;i++){
-    const d=new Date(n); d.setDate(n.getDate()+i);
-    const ds=fd(d);
-    events.filter(e=>(e.start_date_local||'').split('T')[0]===ds&&e.category==='WORKOUT')
-      .forEach((ev,ei)=>{
-        const dur=ev.moving_time?Math.round(ev.moving_time/60):null;
-        drawWV('wv'+ds.replace(/-/g,'')+ei, parseBlocks(ev.description)||guessBlocks(ev.name,dur));
-      });
-  }
-}
+
 
 function renderWeek(){
   const n=new Date(); let h='';
@@ -690,19 +679,20 @@ function renderWeek(){
     } else { h+='<div class="crest">— repos</div>'; }
     h+='</div>';
   }
-  h+='<button class="cta" onclick="qs(\'Planifie ma semaine selon mes disponibilités et ma forme\')">🧠 Planifier avec le coach ↗</button>';
-  el.innerHTML=h;
-  setTimeout(()=>{
-    for(let i=0;i<7;i++){
-      const d=new Date(n); d.setDate(n.getDate()+i);
-      const ds=fd(d);
-      events.filter(e=>(e.start_date_local||'').split('T')[0]===ds&&e.category==='WORKOUT')
-        .forEach((ev,ei)=>{
-          const dur=ev.moving_time?Math.round(ev.moving_time/60):null;
-          drawWV('wv'+ds.replace(/-/g,'')+ei, parseBlocks(ev.description)||guessBlocks(ev.name,dur));
-        });
-    }
-  },50);
+  return h;
+}
+
+function drawAllWV2(){
+  const n=new Date();
+  for(let i=0;i<7;i++){
+    const d=new Date(n); d.setDate(n.getDate()+i);
+    const ds=fd(d);
+    events.filter(e=>(e.start_date_local||'').split('T')[0]===ds&&e.category==='WORKOUT')
+      .forEach((ev,ei)=>{
+        const dur=ev.moving_time?Math.round(ev.moving_time/60):null;
+        drawWV('wv'+ds.replace(/-/g,'')+ei, parseBlocks(ev.description)||guessBlocks(ev.name,dur));
+      });
+  }
 }
 
 // ── DATA ──
