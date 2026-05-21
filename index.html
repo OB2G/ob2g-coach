@@ -581,9 +581,9 @@ async function launch(){
   document.getElementById('app').style.display='flex';
   updFtp(); renderPbar();
   document.getElementById('hdr-name').textContent=(athlete.name||'Mon compte').toUpperCase();
-  const n=new Date(), old=fd(new Date(n-30*864e5)), nw=fd(new Date(n.getTime()+21*864e5));
+  const n=new Date(), old=fd(new Date(n-90*864e5)), nw=fd(new Date(n.getTime()+21*864e5));
   const [acts,evs]=await Promise.all([
-    apiFetch('/activities?oldest='+old+'&newest='+nw+'&limit=20'),
+    apiFetch('/activities?oldest='+old+'&newest='+nw+'&limit=50'),
     apiFetch('/events?oldest='+old+'&newest='+nw)
   ]);
   if(acts&&Array.isArray(acts)) activities=acts;
