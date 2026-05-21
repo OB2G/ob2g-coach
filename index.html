@@ -680,7 +680,7 @@ function renderMonth(){
   for(let day=1;day<=dim;day++){
     const d=new Date(y,m,day), ds=fd(d), isToday=ds===today();
     const pl=events.filter(e=>(e.start_date_local||'').split('T')[0]===ds&&e.category==='WORKOUT');
-    const done=activities.filter(a=>(a.start_date_local||'').split('T')[0]===ds);
+    const done=activities.filter(a=>(a.start_date_local||a.date||'').split('T')[0]===ds);
     const hasKey=pl.some(e=>(e.name||'').toLowerCase().includes('longue'));
     let cls='mcell';
     if(isToday)cls+=' today';
@@ -695,7 +695,7 @@ function renderMonth(){
       const dur=Math.round((a.moving_time||0)/60);
       const w=a.average_watts?Math.round(a.average_watts):null;
       const tss=a.icu_training_load?Math.round(a.icu_training_load):null;
-      const nm=(a.name||'').substring(0,9);
+      const nm=(a.name||a.type||'Sortie').substring(0,9);
       const type=a.type||a.sport_type||'';
       const src=a.device_name||a.trainer||'';
       const icon=type.toLowerCase().includes('run')?'🏃':type.toLowerCase().includes('walk')||type.toLowerCase().includes('hike')?'🚶':type.toLowerCase().includes('swim')?'🏊':'🚴';
@@ -739,7 +739,7 @@ function renderMonth(){
 function goWeekDay(ds){
   // Chercher une activité ce jour (plusieurs formats de date possibles)
   const done=activities.filter(a=>{
-    const d=(a.start_date_local||a.start_date||'');
+    const d=(a.start_date_local||a.date||a.start_date||'');
     return d.startsWith(ds);
   });
   if(done.length){ showActDetail(done[0].id); return; }
@@ -756,7 +756,7 @@ function renderWeek(){
     const ds=fd(d);
     const lbl=i===0?'AUJOURD\'HUI':i===1?'DEMAIN':DAYS[d.getDay()].toUpperCase();
     const pl=events.filter(e=>(e.start_date_local||'').split('T')[0]===ds&&e.category==='WORKOUT');
-    const done=activities.filter(a=>(a.start_date_local||'').split('T')[0]===ds);
+    const done=activities.filter(a=>(a.start_date_local||a.date||'').split('T')[0]===ds);
     h+=`<div class="cd${i===0?' today':''}"><div class="ch"><span class="cn">${lbl}</span><span class="cdate">${d.getDate()} ${MONTHS[d.getMonth()]}</span></div>`;
     if(done.length){
       done.forEach(a=>{
@@ -764,7 +764,7 @@ function renderWeek(){
         const w=a.average_watts?Math.round(a.average_watts):null;
         const hr=a.average_heartrate?Math.round(a.average_heartrate):null;
         const tss=a.icu_training_load?Math.round(a.icu_training_load):null;
-        h+=`<div class="wc" onclick="showActDetail('${a.id}')" style="cursor:pointer"><div class="wc-top"><span class="wc-name">✅ ${a.name||'Sortie'}</span><span class="badge bdone">RÉALISÉ</span></div>
+        h+=`<div class="wc" onclick="showActDetail('${a.id}')" style="cursor:pointer"><div class="wc-top"><span class="wc-name">✅ ${a.name||a.type||'Sortie'}</span><span class="badge bdone">RÉALISÉ</span></div>
           <div class="wcs"><span><b>${dur}min</b></span>${w?`<span><b>${w}W</b></span>`:''} ${hr?`<span><b>${hr}bpm</b></span>`:''} ${tss?`<span><b>${tss}TSS</b></span>`:''}</div></div>`;
       });
     } else if(pl.length){
@@ -791,7 +791,7 @@ function drawMonthWV(){
   for(let day=1;day<=dim;day++){
     const d=new Date(y,m,day), ds=fd(d);
     const pl=events.filter(e=>(e.start_date_local||'').split('T')[0]===ds&&e.category==='WORKOUT');
-    const done=activities.filter(a=>(a.start_date_local||'').split('T')[0]===ds);
+    const done=activities.filter(a=>(a.start_date_local||a.date||'').split('T')[0]===ds);
     if(!done.length&&pl.length){
       pl.slice(0,1).forEach(ev=>{
         const vid='mc'+ds.replace(/-/g,'');
@@ -854,13 +854,13 @@ function showActDetail(actId){
   const maxHr=a.max_heartrate?Math.round(a.max_heartrate):null;
   const tss=a.icu_training_load?Math.round(a.icu_training_load):null;
   const pct=w?Math.round(w/ftp*100):null;
-  const date=(a.start_date_local||'').split('T')[0];
+  const date=(a.start_date_local||a.date||'').split('T')[0];
 
   const type=a.type||a.sport_type||'';
   const src=a.device_name||a.trainer||'';
   const isZwift=(a.name||'').toLowerCase().includes('zwift')||(src||'').toLowerCase().includes('zwift');
   const typeIcon=type.toLowerCase().includes('run')?'🏃':type.toLowerCase().includes('walk')?'🚶':type.toLowerCase().includes('swim')?'🏊':'🚴';
-  document.getElementById('act-title').textContent=(typeIcon+(isZwift?' ⚡ ':' ')+(a.name||'Séance'));
+  document.getElementById('act-title').textContent=(typeIcon+(isZwift?' ⚡ ':' ')+(a.name||a.type||'Séance'));
   document.getElementById('act-sub').textContent=`${date} · ${dur} min${tss?' · '+tss+' TSS':''}${type?' · '+type:''}${isZwift?' · Zwift':''}`;
 
   // Chercher la séance planifiée correspondante
@@ -948,7 +948,7 @@ function renderData(){
     h+='<div class="sec">Dernières sorties</div><div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:4px 12px;">';
     activities.slice(0,8).forEach(a=>{
       const dur=Math.round((a.moving_time||0)/60);
-      const date=(a.start_date_local||'').split('T')[0];
+      const date=(a.start_date_local||a.date||'').split('T')[0];
       const w=a.average_watts?Math.round(a.average_watts):null;
       const hr=a.average_heartrate?Math.round(a.average_heartrate):null;
       const tss=a.icu_training_load?Math.round(a.icu_training_load):null;
@@ -956,7 +956,7 @@ function renderData(){
       let zk='z1';
       if(pct){if(pct>94)zk='z5';else if(pct>87)zk='z4';else if(pct>75)zk='z3';else if(pct>55)zk='z2';}
       h+=`<div class="ar" onclick="showActDetail('${a.id}')" style="cursor:pointer"><div class="ai">🚴</div><div style="flex:1">
-        <div class="an">${a.name||'Sortie'}</div>
+        <div class="an">${a.name||a.type||'Sortie'}</div>
         <div class="am">${[date,dur+'min',w?w+'W':'',hr?hr+'bpm':''].filter(Boolean).join(' · ')}</div>
         ${w&&pct?`<div class="pb2"><div class="pb2l"><span>${w}W · ${pct}% FTP</span><span>${zk.toUpperCase()}</span></div><div class="pb2b"><div class="pb2f" style="width:${Math.min(pct,100)}%;background:${ZC[zk]}"></div></div></div>`:''}
       </div>${tss?`<div class="atss">${tss}</div>`:''}</div>`;
