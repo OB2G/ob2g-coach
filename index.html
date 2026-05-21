@@ -579,7 +579,7 @@ function renderCal(){
     <button class="cal-tb${calView==='month'?' on':''}" onclick="setCalView('month')">Mois</button>
   </div></div>`;
   h += calView==='month' ? renderMonth() : renderWeek();
-  h += '<button class="cta" onclick="qs('Planifie ma semaine selon mes disponibilités et ma forme')">🧠 Planifier avec le coach ↗</button>';
+  h += '<button class="cta" onclick="qs(&quot;Planifie ma semaine selon mes disponibilit&eacute;s et ma forme&quot;)">🧠 Planifier avec le coach ↗</button>';
   el.innerHTML=h;
   if(calView==='week') setTimeout(drawAllWV, 50);
 }
