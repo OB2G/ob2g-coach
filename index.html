@@ -865,10 +865,19 @@ function qs(t){ document.getElementById('inp').value=t; goTab(0); sendMsg(); }
 function resizeInp(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,90)+'px'; }
 function onKey(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();} }
 
-window.onload=()=>{
+window.onload=async()=>{
   const saved=localStorage.getItem('ob2g_key')||API_KEY;
   document.getElementById('key-inp').value=saved;
-  if(saved){ apiKey=saved; doConnect(); }
+  apiKey=saved;
+  const btn=document.getElementById('conn-btn');
+  btn.disabled=true; btn.textContent='CONNEXION...';
+  const r=await apiFetch('');
+  if(r){
+    localStorage.setItem('ob2g_key',saved);
+    athlete=r; launch();
+  } else {
+    btn.disabled=false; btn.textContent='CONNECTER';
+  }
 };
 </script>
 </body>
