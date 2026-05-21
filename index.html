@@ -357,6 +357,41 @@ html,body{height:100%;background:var(--black);color:var(--cream);font-family:var
   </div>
 </div>
 
+<!-- MEMOIRE MODAL -->
+<div class="modal" id="mmemory">
+  <div class="mc">
+    <div class="mt">MÉMOIRE COACH</div>
+    <div class="ms">Historique des échanges importants</div>
+    <div id="memory-list" style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto;"></div>
+    <div class="mbtns">
+      <button class="mbtn-save" onclick="closeM('mmemory')">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- BRIEFING MODAL -->
+<div class="modal" id="mbriefing">
+  <div class="mc">
+    <div class="mt" id="brief-title">BRIEFING</div>
+    <div class="ms" id="brief-sub"></div>
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <button id="btn-zwift" onclick="selectMode('zwift')"
+        style="flex:1;padding:12px;border-radius:10px;border:2px solid var(--green);background:rgba(76,175,125,.15);color:var(--green);font-family:var(--font-h);font-size:16px;cursor:pointer;letter-spacing:.06em;">
+        ⚡ ZWIFT
+      </button>
+      <button id="btn-dehors" onclick="selectMode('dehors')"
+        style="flex:1;padding:12px;border-radius:10px;border:2px solid var(--border2);background:var(--card2);color:var(--cream3);font-family:var(--font-h);font-size:16px;cursor:pointer;letter-spacing:.06em;">
+        🌿 DEHORS
+      </button>
+    </div>
+    <div id="brief-content"></div>
+    <div class="mbtns">
+      <button class="mbtn-cancel" onclick="closeM('mbriefing')">Fermer</button>
+      <button class="mbtn-save" onclick="closeM('mbriefing');demandeBriefCoach()">🧠 Brief coach</button>
+    </div>
+  </div>
+</div>
+
 <!-- APP -->
 <div id="app">
   <div id="hdr">
@@ -368,6 +403,7 @@ html,body{height:100%;background:var(--black);color:var(--cream);font-family:var
       <span class="h-fv" id="ftp-disp">160W</span>
       <button class="h-btn" onclick="openM('mftp')">⚡</button>
       <button class="h-btn" onclick="openM('mprofil')">👤</button>
+      <button class="h-btn" onclick="openM('mmemory')" title="Mémoire coach">🧠</button>
     </div>
   </div>
   <div id="pbar"></div>
@@ -415,7 +451,7 @@ const ZH={z1:.35,z2:.65,z3:.80,z4:.92,z5:1.0};
 
 // ── STATE ──
 let apiKey='', ftp=160, athlete=null, activities=[], events=[], history=[], busy=false;
-let calView='week', calMonth=new Date(), healthData=null;
+let calView='week', calMonth=new Date(), healthData=null, coachMemory=[];
 
 // ── UTILS ──
 const fd = d => d.toISOString().split('T')[0];
@@ -531,6 +567,7 @@ function renderPbar(){
 
 // ── MODALS ──
 function openM(id){
+  if(id==='mmemory'){ renderMemoryModal(); document.getElementById(id).classList.add('open'); return; }
   if(id==='mprofil'){
     const p=getProfil();
     ['prenom','age','taille','poids','cible'].forEach(k=>{
@@ -597,7 +634,9 @@ async function launch(){
   if(evs&&Array.isArray(evs)) events=evs;
   renderCal(); renderData();
   fetchHealth();
+  fetchMemory();
   const fn=p.prenom||(athlete.name||'').split(' ')[0]||'Rider';
+  await fetchMemory();
   const planned=events.filter(e=>(e.start_date_local||'').split('T')[0]>=today()&&e.category==='WORKOUT').length;
   const tsb=Math.round((athlete.icu_ctl||0)-(athlete.icu_atl||0));
   let msg=`Salut ${fn} 🤙 Connecté. ${planned?planned+' séance(s) planifiée(s). ':''}FTP ${ftp}W.`;
@@ -833,10 +872,13 @@ function renderWeek(){
         const badge=nm.includes('longue')||nm.includes('j7')?'<span class="badge bkey">CLÉ</span>':nm.includes('recup')?'<span class="badge brec">RÉCUP</span>':'<span class="badge bz2">Z2</span>';
         const vid='wv'+ds.replace(/-/g,'')+ei;
         const blocks=parseBlocks(ev.description)||guessBlocks(ev.name,dur);
-        h+=`<div class="wc"><div class="wc-top"><span class="wc-name">${ev.name}</span>${badge}</div>
+        h+=`<div class="wc" onclick="openBriefing('${ev.id}','${(ev.name||'').replace(/'/g,"\\'")}',${dur||60})" style="cursor:pointer">
+          <div class="wc-top"><span class="wc-name">${ev.name}</span>${badge}</div>
           <div class="wv" id="${vid}"></div>
           <div class="wvl">${zLabels(blocks)}</div>
-          <div class="wcs">${dur?`<span><b>${dur}min</b></span>`:''} ${ev.icu_training_load?`<span><b>${Math.round(ev.icu_training_load)}TSS</b></span>`:''} <span><b>${z2min()}–${z2max()}W</b></span></div></div>`;
+          <div class="wcs">${dur?`<span><b>${dur}min</b></span>`:''} ${ev.icu_training_load?`<span><b>${Math.round(ev.icu_training_load)}TSS</b></span>`:''} <span><b>${z2min()}–${z2max()}W</b></span></div>
+          <div style="font-size:11px;color:var(--green);font-family:var(--font-sub);margin-top:6px;letter-spacing:.04em;">▶ BRIEFING AVANT SÉANCE</div>
+        </div>`;
       });
     } else { h+='<div class="crest">— repos</div>'; }
     h+='</div>';
@@ -1021,6 +1063,10 @@ function renderData(){
   const tsbBg=tsb>5?'rgba(76,175,125,.15)':tsb<-20?'rgba(200,64,64,.15)':'rgba(200,146,42,.15)';
   let h='';
   // Carte Apple Santé
+  if(coachMemory.length){
+    c+='\n=== MÉMOIRE SESSIONS PRÉCÉDENTES ===\n';
+    coachMemory.slice(0,5).forEach(m=>c+=`[${m.date}] ${m.text}\n`);
+  }
   if(healthData&&Object.keys(healthData).length>1){
     h+=`<div style="background:rgba(58,152,152,.08);border:1px solid rgba(58,152,152,.2);border-radius:10px;padding:12px 14px;margin-bottom:12px;">
       <div style="font-size:10px;color:var(--teal);text-transform:uppercase;letter-spacing:.1em;font-family:var(--font-sub);margin-bottom:8px;">🍎 Apple Santé · ${healthData.date||'Aujourd\'hui'}</div>
@@ -1061,6 +1107,45 @@ function renderData(){
   }
   h+='<button class="cta" onclick="qs(\'Analyse mes données et dis-moi comment progresser\')">🧠 Analyser avec le coach ↗</button>';
   el.innerHTML=h;
+}
+
+// ── MÉMOIRE COACH ──
+async function fetchMemory(){
+  try{
+    const r=await fetch(PROXY+'/store/memory');
+    const d=await r.json();
+    if(d&&d.memory) coachMemory=d.memory;
+  }catch(e){}
+}
+
+async function saveMemory(text){
+  try{
+    await fetch(PROXY+'/store/memory',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({entry:text})});
+    coachMemory.unshift({date:today(),text});
+    coachMemory=coachMemory.slice(0,20);
+  }catch(e){}
+}
+
+function extractMemory(reply){
+  const keywords=['planifié','créé','objectif','programme','semaine','progression','FTP','poids','attention','bonne'];
+  const hasKw=keywords.some(k=>reply.toLowerCase().includes(k));
+  if(hasKw&&reply.length>80){
+    const summary=reply.replace(/\[ACTION:[^\]]+\]/g,'').trim().substring(0,200);
+    saveMemory(summary);
+  }
+}
+
+function renderMemoryModal(){
+  const el=document.getElementById('memory-list');
+  if(!coachMemory.length){
+    el.innerHTML='<div style="color:var(--cream4);font-size:12px;text-align:center;padding:20px;">Aucune mémoire — le coach mémorise automatiquement les échanges importants.</div>';
+    return;
+  }
+  el.innerHTML=coachMemory.map(m=>`
+    <div style="background:var(--card2);border-radius:6px;padding:8px 10px;">
+      <div style="font-size:10px;color:var(--cream4);font-family:var(--font-sub);margin-bottom:3px;">${m.date}</div>
+      <div style="font-size:12px;color:var(--cream3);line-height:1.5;">${m.text}</div>
+    </div>`).join('');
 }
 
 // ── CHAT ──
@@ -1125,6 +1210,7 @@ async function sendMsg(){
     const reply=data.content?.[0]?.text||'Erreur.';
     history.push({role:'assistant',content:reply});
     hideTyping(); await processReply(reply);
+    extractMemory(reply);
   }catch(e){ hideTyping(); addMsg('coach','Erreur réseau.'); }
   busy=false; document.getElementById('sbtn').disabled=false;
 }
@@ -1186,6 +1272,108 @@ function goTab(n){
 function qs(t){ document.getElementById('inp').value=t; goTab(0); sendMsg(); }
 function resizeInp(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,90)+'px'; }
 function onKey(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();} }
+
+// ── BRIEFING ──
+let briefMode='zwift', briefEvent=null;
+
+function openBriefing(evId, evName, dur){
+  briefEvent=events.find(e=>String(e.id)===String(evId))||{id:evId,name:evName,moving_time:dur*60};
+  briefMode='zwift';
+  document.getElementById('brief-title').textContent=evName.toUpperCase();
+  const date=(briefEvent.start_date_local||'').split('T')[0];
+  const isToday=date===today();
+  document.getElementById('brief-sub').textContent=(isToday?'Aujourd\'hui':'Demain')+' · '+dur+' min';
+  selectMode('zwift');
+  document.getElementById('mbriefing').classList.add('open');
+}
+
+function selectMode(mode){
+  briefMode=mode;
+  const bz=document.getElementById('btn-zwift');
+  const bd=document.getElementById('btn-dehors');
+  if(mode==='zwift'){
+    bz.style.cssText='flex:1;padding:12px;border-radius:10px;border:2px solid var(--green);background:rgba(76,175,125,.15);color:var(--green);font-family:var(--font-h);font-size:16px;cursor:pointer;letter-spacing:.06em;';
+    bd.style.cssText='flex:1;padding:12px;border-radius:10px;border:2px solid var(--border2);background:var(--card2);color:var(--cream3);font-family:var(--font-h);font-size:16px;cursor:pointer;letter-spacing:.06em;';
+  } else {
+    bd.style.cssText='flex:1;padding:12px;border-radius:10px;border:2px solid var(--amber);background:rgba(200,146,42,.15);color:var(--amber);font-family:var(--font-h);font-size:16px;cursor:pointer;letter-spacing:.06em;';
+    bz.style.cssText='flex:1;padding:12px;border-radius:10px;border:2px solid var(--border2);background:var(--card2);color:var(--cream3);font-family:var(--font-h);font-size:16px;cursor:pointer;letter-spacing:.06em;';
+  }
+  renderBriefing();
+}
+
+function renderBriefing(){
+  const ev=briefEvent, p=getProfil(), mode=briefMode;
+  const dur=ev.moving_time?Math.round(ev.moving_time/60):60;
+  const tsb=Math.round((athlete?.icu_ctl||0)-(athlete?.icu_atl||0));
+  const hour=new Date().getHours();
+  const fcMin=Math.round((p.fcrep||55)+((p.fcmax||165)-(p.fcrep||55))*.6);
+  const fcMax=Math.round((p.fcrep||55)+((p.fcmax||165)-(p.fcrep||55))*.7);
+  const blocks=parseBlocks(ev.description)||guessBlocks(ev.name,dur);
+
+  // Forme
+  let fc='green',fi='💪',ft='Prêt à rouler';
+  if(tsb<-20){fc='red';fi='😴';ft='Fatigue accumulée — réduis la durée';}
+  else if(tsb<-10){fc='amber';fi='⚠️';ft='Légèrement fatigué — reste bas de Z2';}
+  else if(healthData?.sleep_hours&&healthData.sleep_hours<6){fc='amber';fi='😪';ft='Nuit courte — hydrate-toi bien';}
+
+  // Nutrition
+  let nutri='';
+  if(hour<9)nutri='🍌 Banane + café 30min avant';
+  else if(hour<12)nutri='🥣 Flocons avoine si pas de petit-déj';
+  else if(hour<14)nutri='⏰ Attends 2h après repas';
+  else if(hour<17)nutri='🍎 Collation légère 1h avant si faim';
+  else nutri='🕐 Reste léger — dîne après la séance';
+
+  let h='';
+  // Forme du jour
+  h+=`<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:8px;font-size:12px;margin-bottom:8px;background:rgba(${fc==='green'?'76,175,125':fc==='amber'?'200,146,42':'200,64,64'},.1);border:1px solid rgba(${fc==='green'?'76,175,125':fc==='amber'?'200,146,42':'200,64,64'},.2);color:var(--${fc==='green'?'green':fc==='amber'?'amber':'red'});">
+    ${fi} <div><strong>Forme :</strong> ${ft} (TSB ${tsb>=0?'+':''}${tsb}${healthData?.sleep_hours?' · '+healthData.sleep_hours+'h sommeil':''}${healthData?.resting_hr?' · FC repos '+healthData.resting_hr+'bpm':''})</div></div>`;
+
+  // Cibles
+  h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+    <div class="cmp-box"><div class="cmp-lbl">⚡ Puissance Z2</div><div class="cmp-val">${z2min()}–${z2max()}</div><div class="cmp-sub">watts · ${Math.round(z2min()/ftp*100)}–${Math.round(z2max()/ftp*100)}% FTP</div></div>
+    <div class="cmp-box"><div class="cmp-lbl">❤️ FC cible Z2</div><div class="cmp-val">${fcMin}–${fcMax}</div><div class="cmp-sub">bpm</div></div>
+  </div>`;
+
+  // Viz séance
+  h+=`<div style="background:var(--card2);border-radius:8px;padding:8px 10px;margin-bottom:8px;">
+    <div style="font-size:10px;color:var(--cream3);font-family:var(--font-sub);margin-bottom:6px;">STRUCTURE SÉANCE</div>
+    <div class="wv" id="brief-wv" style="height:40px;border-radius:6px;background:var(--card);"></div>
+    <div class="wvl" style="margin-top:4px;">${zLabels(blocks)}</div>
+  </div>`;
+
+  // Config Zwift ou Dehors
+  if(mode==='zwift'){
+    h+=`<div style="background:rgba(76,175,125,.06);border:1px solid rgba(76,175,125,.2);border-radius:8px;padding:10px 12px;margin-bottom:8px;">
+      <div style="font-size:10px;color:var(--green);text-transform:uppercase;letter-spacing:.1em;font-family:var(--font-sub);margin-bottom:6px;">⚡ CONFIG ZWIFT</div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid var(--border);"><span style="color:var(--cream3)">Mode trainer</span><span style="color:var(--cream)">ERG (puissance auto)</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid var(--border);"><span style="color:var(--cream3)">Cadence cible</span><span style="color:var(--cream)">85–95 rpm</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid var(--border);"><span style="color:var(--cream3)">Monde suggéré</span><span style="color:var(--cream)">${dur<=45?'Watopia Flats':'Watopia / Makuri'}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;"><span style="color:var(--cream3)">Écran principal</span><span style="color:var(--cream)">FC en grand · watts à droite</span></div>
+    </div>`;
+  } else {
+    h+=`<div style="background:rgba(200,146,42,.06);border:1px solid rgba(200,146,42,.2);border-radius:8px;padding:10px 12px;margin-bottom:8px;">
+      <div style="font-size:10px;color:var(--amber);text-transform:uppercase;letter-spacing:.1em;font-family:var(--font-sub);margin-bottom:6px;">🌿 CONSEILS DEHORS</div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid var(--border);"><span style="color:var(--cream3)">Terrain</span><span style="color:var(--cream)">Plat ou légère pente</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid var(--border);"><span style="color:var(--cream3)">Cadence cible</span><span style="color:var(--cream)">85–95 rpm</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid var(--border);"><span style="color:var(--cream3)">Si FC > ${fcMax}bpm</span><span style="color:var(--cream)">Réduis l'allure immédiatement</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;"><span style="color:var(--cream3)">Affichage vélo</span><span style="color:var(--cream)">FC en grand · watts secondaire</span></div>
+    </div>`;
+  }
+
+  // Migraine + nutrition
+  h+=`<div style="display:flex;align-items:flex-start;gap:6px;padding:8px 10px;border-radius:8px;font-size:12px;margin-bottom:6px;background:rgba(200,64,64,.1);border:1px solid rgba(200,64,64,.2);color:var(--red);">
+    ⚠️ <div><strong>Migraine :</strong> Stop immédiat au moindre signe. Max ${z2max()}W / ${fcMax}bpm.</div></div>`;
+  h+=`<div style="display:flex;align-items:center;gap:6px;padding:8px 10px;border-radius:8px;font-size:12px;background:rgba(58,152,152,.1);border:1px solid rgba(58,152,152,.2);color:var(--teal);">${nutri}</div>`;
+
+  document.getElementById('brief-content').innerHTML=h;
+  setTimeout(()=>drawWV('brief-wv',blocks),50);
+}
+
+function demandeBriefCoach(){
+  const ev=briefEvent, mode=briefMode==='zwift'?'sur Zwift':'en extérieur';
+  qs(`Briefing ultra-court pour ma séance "${ev.name}" ${mode} — 2-3 phrases max, style coach direct`);
+}
 
 window.onload=()=>{
   const saved=localStorage.getItem('ob2g_key')||API_KEY;
