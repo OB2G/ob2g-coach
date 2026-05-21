@@ -491,7 +491,7 @@ async function apiFetch(path, method='GET', body=null){
 }
 
 async function doConnect(){
-  const k=document.getElementById('key-inp').value.trim();
+  const k=document.getElementById('key-inp').value.trim()||apiKey;
   if(!k)return;
   const btn=document.getElementById('conn-btn');
   btn.disabled=true; btn.textContent='CONNEXION...';
