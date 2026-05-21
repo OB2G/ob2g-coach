@@ -182,6 +182,53 @@ html,body{height:100%;background:var(--black);color:var(--cream);font-family:var
 .wtss-fill{height:100%;border-radius:2px;background:var(--cream2);}
 .wtss-val{font-size:10px;color:var(--cream3);font-family:var(--font-sub);white-space:nowrap;}
 
+/* ACTIVITY DETAIL MODAL */
+.modal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.88);display:none;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;}
+.modal.open{display:flex;}
+.mc{width:100%;max-width:380px;background:var(--card);border:1px solid var(--border2);border-radius:16px;padding:22px;margin:auto;}
+.mt{font-family:var(--font-h);font-size:24px;letter-spacing:.06em;color:var(--cream);margin-bottom:4px;}
+.ms{font-size:12px;color:var(--cream3);margin-bottom:16px;}
+.msec{font-size:10px;font-weight:600;color:var(--cream3);text-transform:uppercase;letter-spacing:.12em;margin:14px 0 8px;font-family:var(--font-sub);}
+.mrow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.mrow.full{grid-template-columns:1fr;}
+.mf{display:flex;flex-direction:column;gap:4px;}
+.ml{font-size:10px;color:var(--cream3);text-transform:uppercase;letter-spacing:.08em;font-family:var(--font-sub);}
+.mi{padding:10px 12px;background:var(--card2);border:1px solid var(--border2);border-radius:8px;color:var(--cream);font-family:var(--font-body);font-size:14px;outline:none;width:100%;}
+.mi:focus{border-color:var(--cream2);}
+.mi.big{font-family:var(--font-h);font-size:28px;text-align:center;padding:14px;}
+.mzones{background:var(--card2);border-radius:8px;padding:10px 12px;margin:10px 0;}
+.mzr{display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:4px 0;border-bottom:1px solid var(--border);}
+.mzr:last-child{border-bottom:none;}
+.mzn{color:var(--cream3);font-family:var(--font-sub);display:flex;align-items:center;gap:6px;}
+.mzd{width:8px;height:8px;border-radius:50%;}
+.mzv{color:var(--cream);font-size:11px;}
+.mzv.accent{color:var(--green)!important;font-weight:600;}
+.mbtns{display:flex;gap:8px;margin-top:16px;}
+.mbtn-cancel{flex:1;padding:12px;background:none;border:1px solid var(--border2);border-radius:8px;color:var(--cream3);font-family:var(--font-body);font-size:14px;cursor:pointer;}
+.mbtn-save{flex:2;padding:12px;background:var(--cream);border:none;border-radius:8px;color:var(--black);font-family:var(--font-h);font-size:17px;letter-spacing:.08em;cursor:pointer;}
+.dgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:8px 0;}
+.dd{display:flex;flex-direction:column;align-items:center;gap:3px;}
+.dl{font-size:9px;color:var(--cream4);text-transform:uppercase;font-family:var(--font-sub);}
+.dc{width:32px;height:32px;border-radius:8px;border:1px solid var(--border2);background:var(--card2);color:var(--cream4);font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.dc.on{background:rgba(76,175,125,.2);border-color:var(--green);color:var(--green);}
+.dc.on.key{background:rgba(232,224,204,.12);border-color:var(--cream2);color:var(--cream2);}
+.cmp-row{display:flex;gap:8px;margin-bottom:8px;}
+.cmp-box{flex:1;background:var(--card2);border-radius:8px;padding:10px;text-align:center;}
+.cmp-lbl{font-size:10px;color:var(--cream3);text-transform:uppercase;letter-spacing:.08em;font-family:var(--font-sub);margin-bottom:4px;}
+.cmp-val{font-family:var(--font-h);font-size:22px;color:var(--cream);letter-spacing:.04em;}
+.cmp-sub{font-size:10px;color:var(--cream4);margin-top:2px;}
+.cmp-diff{font-size:12px;font-weight:600;margin-top:3px;}
+.zbar-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:8px 0;}
+.zbar-item{display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--card2);border-radius:6px;padding:6px 4px;}
+.zbar-wrap{width:100%;height:50px;display:flex;align-items:flex-end;justify-content:center;}
+.zbar-b{width:60%;border-radius:2px 2px 0 0;min-height:2px;}
+.zbar-pct{font-size:11px;font-weight:600;font-family:var(--font-h);}
+.zbar-min{font-size:9px;color:var(--cream4);font-family:var(--font-sub);}
+.zbar-lbl{font-size:9px;color:var(--cream4);font-family:var(--font-sub);}
+.act-alert{display:flex;align-items:flex-start;gap:6px;padding:8px 10px;border-radius:8px;font-size:12px;margin-top:8px;line-height:1.5;color:var(--amber);background:rgba(200,146,42,.1);border:1px solid rgba(200,146,42,.2);}
+.act-alert.ok{color:var(--green);background:rgba(76,175,125,.1);border-color:rgba(76,175,125,.2);}
+.act-alert.warn{color:var(--red);background:rgba(200,64,64,.1);border-color:rgba(200,64,64,.2);}
+
 /* DATA */
 .sg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
 .sc{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;}
@@ -287,6 +334,19 @@ html,body{height:100%;background:var(--black);color:var(--cream);font-family:var
     <div class="mbtns">
       <button class="mbtn-cancel" onclick="closeM('mftp')">Annuler</button>
       <button class="mbtn-save" onclick="saveFtp()">SAUVEGARDER</button>
+    </div>
+  </div>
+</div>
+
+<!-- ANALYSE SÉANCE MODAL -->
+<div class="modal" id="mact">
+  <div class="mc">
+    <div class="mt" id="act-title">Analyse séance</div>
+    <div class="ms" id="act-sub"></div>
+    <div id="act-content"></div>
+    <div class="mbtns">
+      <button class="mbtn-cancel" onclick="closeM('mact')">Fermer</button>
+      <button class="mbtn-save" onclick="closeM('mact');qs('Analyse ma dernière séance et dis-moi comment progresser')">🧠 Coach</button>
     </div>
   </div>
 </div>
@@ -691,7 +751,7 @@ function renderWeek(){
         const w=a.average_watts?Math.round(a.average_watts):null;
         const hr=a.average_heartrate?Math.round(a.average_heartrate):null;
         const tss=a.icu_training_load?Math.round(a.icu_training_load):null;
-        h+=`<div class="wc"><div class="wc-top"><span class="wc-name">✅ ${a.name||'Sortie'}</span><span class="badge bdone">RÉALISÉ</span></div>
+        h+=`<div class="wc" onclick="showActDetail('${a.id}')" style="cursor:pointer"><div class="wc-top"><span class="wc-name">✅ ${a.name||'Sortie'}</span><span class="badge bdone">RÉALISÉ</span></div>
           <div class="wcs"><span><b>${dur}min</b></span>${w?`<span><b>${w}W</b></span>`:''} ${hr?`<span><b>${hr}bpm</b></span>`:''} ${tss?`<span><b>${tss}TSS</b></span>`:''}</div></div>`;
       });
     } else if(pl.length){
@@ -752,6 +812,100 @@ function drawAllWV2(){
   }
 }
 
+// ── ACTIVITY DETAIL ──
+function getZoneDist(a){
+  if(a.icu_zones&&a.icu_zones.length){
+    const total=a.icu_zones.reduce((s,z)=>s+(z.time||0),0)||1;
+    return a.icu_zones.slice(0,5).map(z=>({pct:Math.round((z.time||0)/total*100),min:Math.round((z.time||0)/60)}));
+  }
+  const pct=a.average_watts?Math.round(a.average_watts/ftp*100):65;
+  const dur=Math.round((a.moving_time||3600)/60);
+  let dist;
+  if(pct<56)dist=[88,10,2,0,0];
+  else if(pct<65)dist=[12,78,8,2,0];
+  else if(pct<73)dist=[8,72,14,4,2];
+  else if(pct<82)dist=[5,35,42,12,6];
+  else dist=[3,12,25,38,22];
+  return dist.map(p=>({pct:p,min:Math.round(dur*p/100)}));
+}
+
+function showActDetail(actId){
+  const a=activities.find(ac=>String(ac.id)===String(actId));
+  if(!a)return;
+  const dur=Math.round((a.moving_time||0)/60);
+  const w=a.average_watts?Math.round(a.average_watts):null;
+  const hr=a.average_heartrate?Math.round(a.average_heartrate):null;
+  const maxHr=a.max_heartrate?Math.round(a.max_heartrate):null;
+  const tss=a.icu_training_load?Math.round(a.icu_training_load):null;
+  const pct=w?Math.round(w/ftp*100):null;
+  const date=(a.start_date_local||'').split('T')[0];
+
+  document.getElementById('act-title').textContent=a.name||'Séance';
+  document.getElementById('act-sub').textContent=`${date} · ${dur} min${tss?' · '+tss+' TSS':''}`;
+
+  // Chercher la séance planifiée correspondante
+  const planned=events.find(e=>(e.start_date_local||'').split('T')[0]===date&&e.category==='WORKOUT');
+
+  let h='';
+
+  // Prévu vs Réalisé
+  if(planned){
+    const pDur=planned.moving_time?Math.round(planned.moving_time/60):null;
+    const pTSS=planned.icu_training_load?Math.round(planned.icu_training_load):null;
+    h+=`<div class="msec">Prévu vs Réalisé</div>
+    <div class="cmp-row">
+      <div class="cmp-box"><div class="cmp-lbl">Durée prévue</div><div class="cmp-val">${pDur?pDur+"'":'—'}</div></div>
+      <div class="cmp-box"><div class="cmp-lbl">Durée réelle</div><div class="cmp-val">${dur}'</div>
+        ${pDur?`<div class="cmp-diff" style="color:${dur>=pDur*.9?'var(--green)':'var(--amber)'}">
+          ${dur>=pDur*.9?'✓ Objectif':'↓ '+(pDur-dur)+"' de moins"}</div>`:''}
+      </div>
+    </div>`;
+    if(pTSS||tss)h+=`<div class="cmp-row">
+      <div class="cmp-box"><div class="cmp-lbl">TSS prévu</div><div class="cmp-val">${pTSS||'—'}</div></div>
+      <div class="cmp-box"><div class="cmp-lbl">TSS réel</div><div class="cmp-val">${tss||'—'}</div>
+        ${pTSS&&tss?`<div class="cmp-diff" style="color:${tss>=pTSS*.85?'var(--green)':'var(--amber)'}">
+          ${tss>=pTSS*.85?'✓':'↓'} ${Math.abs(tss-pTSS)} pts</div>`:''}
+      </div>
+    </div>`;
+  }
+
+  // Métriques
+  h+=`<div class="msec">Métriques</div>
+  <div class="cmp-row">
+    ${w?`<div class="cmp-box"><div class="cmp-lbl">Puissance moy.</div><div class="cmp-val">${w}W</div>
+      <div class="cmp-sub">${pct}% FTP</div>
+      <div class="cmp-diff" style="color:${pct<=75?'var(--green)':'var(--amber)'}">
+        ${pct<=55?'Z1':pct<=75?'✓ Z2':pct<=87?'⚠ Z3':pct<=94?'⚠ Z4':'⚠ Z5'}</div></div>`:''}
+    ${hr?`<div class="cmp-box"><div class="cmp-lbl">FC moyenne</div><div class="cmp-val">${hr}bpm</div>
+      ${maxHr?`<div class="cmp-sub">Max : ${maxHr}bpm</div>`:''}
+      ${maxHr&&maxHr>155?`<div class="cmp-diff" style="color:var(--amber)">⚠ FC élevée</div>`:''}</div>`:''}
+  </div>`;
+
+  // Zones
+  const zDist=getZoneDist(a);
+  const zKeys=['z1','z2','z3','z4','z5'],zNames=['Z1','Z2','Z3','Z4','Z5'];
+  h+=`<div class="msec">Temps par zone</div><div class="zbar-grid">`;
+  zDist.forEach((z,i)=>{
+    h+=`<div class="zbar-item">
+      <div class="zbar-wrap"><div class="zbar-b" style="height:${Math.max(2,z.pct*.45)}px;background:${ZC[zKeys[i]]};opacity:.85;width:60%;border-radius:2px 2px 0 0;"></div></div>
+      <div class="zbar-pct" style="color:${ZC[zKeys[i]]}">${z.pct}%</div>
+      <div class="zbar-min">${z.min}min</div>
+      <div class="zbar-lbl">${zNames[i]}</div>
+    </div>`;
+  });
+  h+='</div>';
+
+  // Alertes
+  const z2pct=zDist[1]?.pct||0;
+  const z3plus=(zDist[2]?.pct||0)+(zDist[3]?.pct||0)+(zDist[4]?.pct||0);
+  if(z3plus>10) h+=`<div class="act-alert warn">⚠️ ${z3plus}% du temps en Z3+ — Phase 1 : reste en Z2 max.</div>`;
+  else if(z2pct>60) h+=`<div class="act-alert ok">✅ Bonne distribution Z2 (${z2pct}%) — séance efficace.</div>`;
+  if(maxHr&&maxHr>155) h+=`<div class="act-alert warn">⚠️ FC max élevée (${maxHr}bpm) — surveille les signes précurseurs.</div>`;
+
+  document.getElementById('act-content').innerHTML=h;
+  document.getElementById('mact').classList.add('open');
+}
+
 // ── DATA ──
 function renderData(){
   const el=document.getElementById('data-body');
@@ -777,7 +931,7 @@ function renderData(){
       const pct=w?Math.round(w/ftp*100):null;
       let zk='z1';
       if(pct){if(pct>94)zk='z5';else if(pct>87)zk='z4';else if(pct>75)zk='z3';else if(pct>55)zk='z2';}
-      h+=`<div class="ar"><div class="ai">🚴</div><div style="flex:1">
+      h+=`<div class="ar" onclick="showActDetail('${a.id}')" style="cursor:pointer"><div class="ai">🚴</div><div style="flex:1">
         <div class="an">${a.name||'Sortie'}</div>
         <div class="am">${[date,dur+'min',w?w+'W':'',hr?hr+'bpm':''].filter(Boolean).join(' · ')}</div>
         ${w&&pct?`<div class="pb2"><div class="pb2l"><span>${w}W · ${pct}% FTP</span><span>${zk.toUpperCase()}</span></div><div class="pb2b"><div class="pb2f" style="width:${Math.min(pct,100)}%;background:${ZC[zk]}"></div></div></div>`:''}
