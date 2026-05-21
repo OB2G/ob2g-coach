@@ -680,7 +680,7 @@ function renderMonth(){
   for(let day=1;day<=dim;day++){
     const d=new Date(y,m,day), ds=fd(d), isToday=ds===today();
     const pl=events.filter(e=>(e.start_date_local||'').split('T')[0]===ds&&e.category==='WORKOUT');
-    const done=activities.filter(a=>(a.start_date_local||'').split('T')[0]===ds);
+    const done=activities.filter(a=>(a.start_date_local||'').split('T')[0]===ds&&!(a.source==='STRAVA'&&!a.moving_time));
     const hasKey=pl.some(e=>(e.name||'').toLowerCase().includes('longue'));
     let cls='mcell';
     if(isToday)cls+=' today';
@@ -693,7 +693,7 @@ function renderMonth(){
     // Séances réalisées
     done.slice(0,1).forEach(a=>{
       const dur=Math.round((a.moving_time||0)/60);
-      const w=a.average_watts?Math.round(a.average_watts):null;
+      const w=(a.average_watts||a.icu_average_watts)?Math.round(a.average_watts||a.icu_average_watts):null;
       const tss=a.icu_training_load?Math.round(a.icu_training_load):null;
       const nm=(a.name||a.type||'Sortie').substring(0,9);
       const type=a.type||a.sport_type||'';
@@ -751,12 +751,12 @@ function renderWeek(){
     const ds=fd(d);
     const lbl=i===0?'AUJOURD\'HUI':i===1?'DEMAIN':DAYS[d.getDay()].toUpperCase();
     const pl=events.filter(e=>(e.start_date_local||'').split('T')[0]===ds&&e.category==='WORKOUT');
-    const done=activities.filter(a=>(a.start_date_local||'').split('T')[0]===ds);
+    const done=activities.filter(a=>(a.start_date_local||'').split('T')[0]===ds&&!(a.source==='STRAVA'&&!a.moving_time));
     h+=`<div class="cd${i===0?' today':''}"><div class="ch"><span class="cn">${lbl}</span><span class="cdate">${d.getDate()} ${MONTHS[d.getMonth()]}</span></div>`;
     if(done.length){
       done.forEach(a=>{
         const dur=Math.round((a.moving_time||0)/60);
-        const w=a.average_watts?Math.round(a.average_watts):null;
+        const w=(a.average_watts||a.icu_average_watts)?Math.round(a.average_watts||a.icu_average_watts):null;
         const hr=a.average_heartrate?Math.round(a.average_heartrate):null;
         const tss=a.icu_training_load?Math.round(a.icu_training_load):null;
         h+=`<div class="wc" onclick="showActDetail('${a.id}')" style="cursor:pointer"><div class="wc-top"><span class="wc-name">✅ ${a.name||a.type||'Sortie'}</span><span class="badge bdone">RÉALISÉ</span></div>
@@ -786,7 +786,7 @@ function drawMonthWV(){
   for(let day=1;day<=dim;day++){
     const d=new Date(y,m,day), ds=fd(d);
     const pl=events.filter(e=>(e.start_date_local||'').split('T')[0]===ds&&e.category==='WORKOUT');
-    const done=activities.filter(a=>(a.start_date_local||'').split('T')[0]===ds);
+    const done=activities.filter(a=>(a.start_date_local||'').split('T')[0]===ds&&!(a.source==='STRAVA'&&!a.moving_time));
     if(!done.length&&pl.length){
       pl.slice(0,1).forEach(ev=>{
         const vid='mc'+ds.replace(/-/g,'');
@@ -822,15 +822,23 @@ function drawAllWV2(){
 
 // ── ACTIVITY DETAIL ──
 function getZoneDist(a){
-  // Données réelles Intervals.icu si disponibles
-  if(a.icu_zones&&a.icu_zones.length){
-    const total=a.icu_zones.reduce((s,z)=>s+(z.time||0),0)||1;
-    return a.icu_zones.slice(0,5).map(z=>({pct:Math.round((z.time||0)/total*100),min:Math.round((z.time||0)/60)}));
-  }
   const dur=Math.round((a.moving_time||3600)/60);
-  // Pas de puissance → pas de graphique zones (marche, course sans capteur)
-  if(!a.average_watts) return null;
-  const pct=Math.round(a.average_watts/ftp*100);
+  // icu_zone_times : tableau [{id,min,max,time},...] — format Intervals.icu
+  if(a.icu_zone_times&&a.icu_zone_times.length>=5){
+    const zones=a.icu_zone_times.slice(0,5);
+    const total=zones.reduce((s,z)=>s+(z.time||0),0)||1;
+    return zones.map(z=>({pct:Math.round((z.time||0)/total*100),min:Math.round((z.time||0)/60)}));
+  }
+  // icu_power_zones : tableau de secondes par zone
+  if(a.icu_power_zones&&a.icu_power_zones.length>=5){
+    const zones=a.icu_power_zones.slice(0,5);
+    const total=zones.reduce((s,v)=>s+(v||0),0)||1;
+    return zones.map(v=>({pct:Math.round((v||0)/total*100),min:Math.round((v||0)/60)}));
+  }
+  // Pas de puissance → pas de graphique
+  if(!a.average_watts&&!a.icu_average_watts) return null;
+  const w=a.average_watts||a.icu_average_watts;
+  const pct=Math.round(w/ftp*100);
   let dist;
   if(pct<56)dist=[88,10,2,0,0];
   else if(pct<65)dist=[12,78,8,2,0];
@@ -843,8 +851,20 @@ function getZoneDist(a){
 function showActDetail(actId){
   const a=activities.find(ac=>String(ac.id)===String(actId));
   if(!a)return;
+  // Activité Strava sans données API
+  if(a.source==='STRAVA'&&!a.moving_time){
+    document.getElementById('act-title').textContent='Activité Strava';
+    document.getElementById('act-sub').textContent=(a.start_date_local||'').split('T')[0];
+    document.getElementById('act-content').innerHTML=`
+      <div class="act-alert" style="color:var(--teal);background:rgba(58,152,152,.1);border-color:rgba(58,152,152,.2);">
+        ℹ️ Cette activité vient de Strava — les données détaillées ne sont pas disponibles via l'API Intervals.icu.<br><br>
+        Pour voir l'analyse complète, ouvre directement <b>intervals.icu</b> ou <b>Strava</b>.
+      </div>`;
+    document.getElementById('mact').classList.add('open');
+    return;
+  }
   const dur=Math.round((a.moving_time||0)/60);
-  const w=a.average_watts?Math.round(a.average_watts):null;
+  const w=(a.average_watts||a.icu_average_watts)?Math.round(a.average_watts||a.icu_average_watts):null;
   const hr=a.average_heartrate?Math.round(a.average_heartrate):null;
   const maxHr=a.max_heartrate?Math.round(a.max_heartrate):null;
   const tss=a.icu_training_load?Math.round(a.icu_training_load):null;
@@ -946,7 +966,7 @@ function renderData(){
     activities.slice(0,8).forEach(a=>{
       const dur=Math.round((a.moving_time||0)/60);
       const date=(a.start_date_local||'').split('T')[0];
-      const w=a.average_watts?Math.round(a.average_watts):null;
+      const w=(a.average_watts||a.icu_average_watts)?Math.round(a.average_watts||a.icu_average_watts):null;
       const hr=a.average_heartrate?Math.round(a.average_heartrate):null;
       const tss=a.icu_training_load?Math.round(a.icu_training_load):null;
       const pct=w?Math.round(w/ftp*100):null;
