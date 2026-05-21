@@ -737,21 +737,14 @@ function renderMonth(){
 }
 
 function goWeekDay(ds){
-  // Si séance réalisée ce jour → ouvrir l'analyse
-  const done=activities.filter(a=>(a.start_date_local||'').split('T')[0]===ds);
+  // Chercher une activité ce jour (plusieurs formats de date possibles)
+  const done=activities.filter(a=>{
+    const d=(a.start_date_local||a.start_date||'');
+    return d.startsWith(ds);
+  });
   if(done.length){ showActDetail(done[0].id); return; }
-  // Sinon basculer en vue semaine centrée sur ce jour
-  const d=new Date(ds);
-  const today=new Date();
-  const diff=Math.round((d-today)/864e5);
-  if(diff>=-6&&diff<=0){
-    // Jour dans les 7 derniers jours → vue semaine
-    calView='week'; renderCal();
-  } else {
-    // Jour trop loin → rester en vue mois
-    const pl=events.filter(e=>(e.start_date_local||'').split('T')[0]===ds&&e.category==='WORKOUT');
-    if(pl.length) showActDetail && null; // séance planifiée, pas d'analyse dispo
-  }
+  // Pas d'activité → vue semaine
+  calView='week'; renderCal();
 }
 
 
