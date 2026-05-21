@@ -695,9 +695,13 @@ function renderMonth(){
       const dur=Math.round((a.moving_time||0)/60);
       const w=a.average_watts?Math.round(a.average_watts):null;
       const tss=a.icu_training_load?Math.round(a.icu_training_load):null;
-      const nm=(a.name||'').substring(0,8);
-      inner+=`<div class="mcdone">✅ ${nm}</div>`;
-      inner+=`<div class="mctss">${dur}' ${w?w+'W':''} ${tss?tss+'tss':''}</div>`;
+      const nm=(a.name||'').substring(0,9);
+      const type=a.type||a.sport_type||'';
+      const src=a.device_name||a.trainer||'';
+      const icon=type.toLowerCase().includes('run')?'🏃':type.toLowerCase().includes('walk')||type.toLowerCase().includes('hike')?'🚶':type.toLowerCase().includes('swim')?'🏊':'🚴';
+      const isZwift=(a.name||'').toLowerCase().includes('zwift')||(src||'').toLowerCase().includes('zwift');
+      inner+=`<div class="mcdone">${icon}${isZwift?'⚡':''} ${nm}</div>`;
+      inner+=`<div class="mctss">${dur}'${w?' '+w+'W':''}${tss?' '+tss+'t':''}</div>`;
     });
 
     // Séances planifiées (si pas réalisé)
@@ -830,12 +834,15 @@ function drawAllWV2(){
 
 // ── ACTIVITY DETAIL ──
 function getZoneDist(a){
+  // Données réelles Intervals.icu si disponibles
   if(a.icu_zones&&a.icu_zones.length){
     const total=a.icu_zones.reduce((s,z)=>s+(z.time||0),0)||1;
     return a.icu_zones.slice(0,5).map(z=>({pct:Math.round((z.time||0)/total*100),min:Math.round((z.time||0)/60)}));
   }
-  const pct=a.average_watts?Math.round(a.average_watts/ftp*100):65;
   const dur=Math.round((a.moving_time||3600)/60);
+  // Pas de puissance → pas de graphique zones (marche, course sans capteur)
+  if(!a.average_watts) return null;
+  const pct=Math.round(a.average_watts/ftp*100);
   let dist;
   if(pct<56)dist=[88,10,2,0,0];
   else if(pct<65)dist=[12,78,8,2,0];
@@ -856,8 +863,12 @@ function showActDetail(actId){
   const pct=w?Math.round(w/ftp*100):null;
   const date=(a.start_date_local||'').split('T')[0];
 
-  document.getElementById('act-title').textContent=a.name||'Séance';
-  document.getElementById('act-sub').textContent=`${date} · ${dur} min${tss?' · '+tss+' TSS':''}`;
+  const type=a.type||a.sport_type||'';
+  const src=a.device_name||a.trainer||'';
+  const isZwift=(a.name||'').toLowerCase().includes('zwift')||(src||'').toLowerCase().includes('zwift');
+  const typeIcon=type.toLowerCase().includes('run')?'🏃':type.toLowerCase().includes('walk')?'🚶':type.toLowerCase().includes('swim')?'🏊':'🚴';
+  document.getElementById('act-title').textContent=(typeIcon+(isZwift?' ⚡ ':' ')+(a.name||'Séance'));
+  document.getElementById('act-sub').textContent=`${date} · ${dur} min${tss?' · '+tss+' TSS':''}${type?' · '+type:''}${isZwift?' · Zwift':''}`;
 
   // Chercher la séance planifiée correspondante
   const planned=events.find(e=>(e.start_date_local||'').split('T')[0]===date&&e.category==='WORKOUT');
@@ -900,16 +911,20 @@ function showActDetail(actId){
   // Zones
   const zDist=getZoneDist(a);
   const zKeys=['z1','z2','z3','z4','z5'],zNames=['Z1','Z2','Z3','Z4','Z5'];
-  h+=`<div class="msec">Temps par zone</div><div class="zbar-grid">`;
-  zDist.forEach((z,i)=>{
-    h+=`<div class="zbar-item">
-      <div class="zbar-wrap"><div class="zbar-b" style="height:${Math.max(2,z.pct*.45)}px;background:${ZC[zKeys[i]]};opacity:.85;width:60%;border-radius:2px 2px 0 0;"></div></div>
-      <div class="zbar-pct" style="color:${ZC[zKeys[i]]}">${z.pct}%</div>
-      <div class="zbar-min">${z.min}min</div>
-      <div class="zbar-lbl">${zNames[i]}</div>
-    </div>`;
-  });
-  h+='</div>';
+  if(zDist){
+    h+=`<div class="msec">Temps par zone${a.icu_zones?.length?' (données réelles)':' (estimé)'}</div><div class="zbar-grid">`;
+    zDist.forEach((z,i)=>{
+      h+=`<div class="zbar-item">
+        <div class="zbar-wrap"><div class="zbar-b" style="height:${Math.max(2,z.pct*.45)}px;background:${ZC[zKeys[i]]};opacity:.85;width:60%;border-radius:2px 2px 0 0;"></div></div>
+        <div class="zbar-pct" style="color:${ZC[zKeys[i]]}">${z.pct}%</div>
+        <div class="zbar-min">${z.min}min</div>
+        <div class="zbar-lbl">${zNames[i]}</div>
+      </div>`;
+    });
+    h+='</div>';
+  } else {
+    h+=`<div class="msec">Zones</div><div style="text-align:center;padding:12px;color:var(--cream4);font-size:12px;">Pas de capteur de puissance — zones non disponibles</div>`;
+  }
 
   // Alertes
   const z2pct=zDist[1]?.pct||0;
