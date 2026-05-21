@@ -920,10 +920,12 @@ function showActDetail(actId){
   }
 
   // Alertes
-  const z2pct=zDist[1]?.pct||0;
-  const z3plus=(zDist[2]?.pct||0)+(zDist[3]?.pct||0)+(zDist[4]?.pct||0);
-  if(z3plus>10) h+=`<div class="act-alert warn">⚠️ ${z3plus}% du temps en Z3+ — Phase 1 : reste en Z2 max.</div>`;
-  else if(z2pct>60) h+=`<div class="act-alert ok">✅ Bonne distribution Z2 (${z2pct}%) — séance efficace.</div>`;
+  if(zDist){
+    const z2pct=zDist[1]?.pct||0;
+    const z3plus=(zDist[2]?.pct||0)+(zDist[3]?.pct||0)+(zDist[4]?.pct||0);
+    if(z3plus>10) h+=`<div class="act-alert warn">⚠️ ${z3plus}% du temps en Z3+ — Phase 1 : reste en Z2 max.</div>`;
+    else if(z2pct>60) h+=`<div class="act-alert ok">✅ Bonne distribution Z2 (${z2pct}%) — séance efficace.</div>`;
+  }
   if(maxHr&&maxHr>155) h+=`<div class="act-alert warn">⚠️ FC max élevée (${maxHr}bpm) — surveille les signes précurseurs.</div>`;
 
   document.getElementById('act-content').innerHTML=h;
