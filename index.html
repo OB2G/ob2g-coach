@@ -205,7 +205,7 @@ html,body{height:100%;background:var(--black);color:var(--cream);font-family:var
   <div class="s-tag">The Old Big Bearded Guy · Coach IA</div>
   <div class="s-card">
     <div class="s-lbl">Clé API Intervals.icu</div>
-    <input class="s-inp" type="password" id="key-inp" placeholder="Colle ta clé ici..." autocomplete="off" spellcheck="false"/>
+    <input class="s-inp" type="password" id="key-inp" value="2ow79kzygxtvhcc6i2o6b4u8h" autocomplete="off" spellcheck="false"/>
     <div class="s-hint">Où la trouver : <b>intervals.icu</b> → avatar → Settings → bas de page → <b>Developer Settings</b></div>
     <button class="s-btn" id="conn-btn" onclick="doConnect()">CONNECTER</button>
     <div class="s-err" id="serr">Connexion échouée. Réessaie dans 30s.</div>
@@ -866,19 +866,10 @@ function qs(t){ document.getElementById('inp').value=t; goTab(0); sendMsg(); }
 function resizeInp(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,90)+'px'; }
 function onKey(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();} }
 
-window.onload=async()=>{
+window.onload=()=>{
   const saved=localStorage.getItem('ob2g_key')||API_KEY;
   document.getElementById('key-inp').value=saved;
-  apiKey=saved;
-  const btn=document.getElementById('conn-btn');
-  btn.disabled=true; btn.textContent='CONNEXION...';
-  const r=await apiFetch('');
-  if(r){
-    localStorage.setItem('ob2g_key',saved);
-    athlete=r; launch();
-  } else {
-    btn.disabled=false; btn.textContent='CONNECTER';
-  }
+  if(saved) doConnect();
 };
 </script>
 </body>
