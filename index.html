@@ -532,6 +532,7 @@ function saveProfil(){
     fcmax:parseInt(document.getElementById('p-fcmax').value)||165,
     fcrep:parseInt(document.getElementById('p-fcrep').value)||55,
     ftp:parseInt(document.getElementById('p-ftp').value)||160,
+    poidsDepart:getProfil().poidsDepart||(parseFloat(document.getElementById('p-poids').value)||null),
     obj:document.getElementById('p-obj').value,
     hweek:parseInt(document.getElementById('p-hweek').value)||5,
     phase:document.getElementById('p-phase').value,
@@ -1054,6 +1055,33 @@ function showActDetail(actId){
 }
 
 // ── DATA ──
+function getBestEfforts(){
+  const bests={p5:0,p20:0,p60:0};
+  activities.filter(a=>a.source!=='STRAVA'||a.moving_time).forEach(a=>{
+    if(a.icu_power_zones&&a.icu_weighted_avg_watts){
+      const dur=Math.round((a.moving_time||0)/60);
+      const w=a.icu_weighted_avg_watts||a.average_watts||0;
+      if(dur>=5&&w>bests.p5)bests.p5=w;
+      if(dur>=20&&w>bests.p20)bests.p20=w;
+      if(dur>=55&&w>bests.p60)bests.p60=w;
+    }
+  });
+  return bests;
+}
+
+function getStreak(){
+  const sorted=[...new Set(activities.filter(a=>a.moving_time>0).map(a=>(a.start_date_local||'').split('T')[0]))].sort().reverse();
+  if(!sorted.length)return 0;
+  let streak=0,cur=new Date();
+  for(const ds of sorted){
+    const d=new Date(ds);
+    const diff=Math.round((cur-d)/864e5);
+    if(diff>1)break;
+    streak++;cur=d;
+  }
+  return streak;
+}
+
 function renderData(){
   const el=document.getElementById('data-body');
   const p=getProfil();
@@ -1062,11 +1090,6 @@ function renderData(){
   const tsbL=tsb>5?'Frais 💪':tsb<-20?'Fatigué 😴':'Normal';
   const tsbBg=tsb>5?'rgba(76,175,125,.15)':tsb<-20?'rgba(200,64,64,.15)':'rgba(200,146,42,.15)';
   let h='';
-  // Carte Apple Santé
-  if(coachMemory.length){
-    c+='\n=== MÉMOIRE SESSIONS PRÉCÉDENTES ===\n';
-    coachMemory.slice(0,5).forEach(m=>c+=`[${m.date}] ${m.text}\n`);
-  }
   if(healthData&&Object.keys(healthData).length>1){
     h+=`<div style="background:rgba(58,152,152,.08);border:1px solid rgba(58,152,152,.2);border-radius:10px;padding:12px 14px;margin-bottom:12px;">
       <div style="font-size:10px;color:var(--teal);text-transform:uppercase;letter-spacing:.1em;font-family:var(--font-sub);margin-bottom:8px;">🍎 Apple Santé · ${healthData.date||'Aujourd\'hui'}</div>
@@ -1086,6 +1109,60 @@ function renderData(){
     <div class="sc"><div class="sl">Forme TSB</div><div class="sv" style="color:${tsbC}">${tsb>=0?'+':''}${tsb}</div><div class="tsbb" style="background:${tsbBg};color:${tsbC}">${tsbL}</div></div>
     <div class="sc"><div class="sl">FTP · W/kg</div><div class="sv">${ftp}<span style="font-size:12px;color:var(--cream4)">W</span></div><div class="sd">${p.poids?'W/kg : '+(ftp/p.poids).toFixed(2):'Phase '+p.phase}</div></div>
   </div>`;
+  // Progression poids
+  if(p.poids&&p.cible){
+    const prog=Math.max(0,Math.min(100,Math.round((p.poids-p.cible)/(p.poids-p.cible)*100)));
+    const lost=p.poidsDepart?Math.round((p.poidsDepart-p.poids)*10)/10:0;
+    const remaining=Math.round((p.poids-p.cible)*10)/10;
+    const pct=p.poidsDepart&&p.poidsDepart>p.cible?Math.min(100,Math.round((p.poidsDepart-p.poids)/(p.poidsDepart-p.cible)*100)):0;
+    h+=`<div class="sec">Progression poids</div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+        <div><span style="font-family:var(--font-h);font-size:28px;color:var(--cream)">${p.poids}</span><span style="font-size:11px;color:var(--cream4)"> kg actuels</span></div>
+        <div style="text-align:right;"><span style="font-family:var(--font-h);font-size:18px;color:var(--amber)">-${remaining}</span><span style="font-size:11px;color:var(--cream4)"> kg restants</span></div>
+        <div style="text-align:right;"><span style="font-family:var(--font-h);font-size:18px;color:var(--green)">${p.cible}</span><span style="font-size:11px;color:var(--cream4)"> kg cible</span></div>
+      </div>
+      <div style="height:10px;background:var(--border);border-radius:5px;overflow:hidden;margin-bottom:6px;">
+        <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--green),var(--amber));border-radius:5px;transition:width .5s;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--cream4);">
+        <span>Départ ${p.poidsDepart||p.poids}kg</span>
+        <span style="color:var(--green);font-weight:600">${pct}% atteint</span>
+        <span>Cible ${p.cible}kg</span>
+      </div>
+    </div>`;
+  }
+
+  // Records de puissance
+  const bests=getBestEfforts();
+  if(bests.p5||bests.p20||bests.p60){
+    h+=`<div class="sec">Records de puissance</div>
+    <div class="sg" style="grid-template-columns:repeat(3,1fr);">
+      ${bests.p5?`<div class="sc"><div class="sl">5 min</div><div class="sv">${bests.p5}W</div><div class="sd">${Math.round(bests.p5/ftp*100)}% FTP</div></div>`:''}
+      ${bests.p20?`<div class="sc"><div class="sl">20 min</div><div class="sv">${bests.p20}W</div><div class="sd">${Math.round(bests.p20/ftp*100)}% FTP</div></div>`:''}
+      ${bests.p60?`<div class="sc"><div class="sl">1 heure</div><div class="sv">${bests.p60}W</div><div class="sd">${Math.round(bests.p60/ftp*100)}% FTP</div></div>`:''}
+    </div>`;
+  }
+
+  // Streak + badges
+  const streak=getStreak();
+  const totalSessions=activities.filter(a=>a.moving_time>0).length;
+  const totalTSS=Math.round(activities.reduce((s,a)=>s+(a.icu_training_load||0),0));
+  h+=`<div class="sec">Stats & Badges</div>
+  <div class="sg">
+    <div class="sc"><div class="sl">Séances totales</div><div class="sv">${totalSessions}</div><div class="sd">depuis le début</div></div>
+    <div class="sc"><div class="sl">TSS total</div><div class="sv">${totalTSS}</div><div class="sd">charge accumulée</div></div>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
+    ${streak>=3?`<div style="background:rgba(76,175,125,.15);border:1px solid rgba(76,175,125,.3);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--green);">🔥 ${streak} jours de suite</div>`:''}
+    ${totalSessions>=1?`<div style="background:rgba(232,224,204,.08);border:1px solid var(--border2);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--cream2);">🚴 Première séance</div>`:''}
+    ${totalSessions>=10?`<div style="background:rgba(232,224,204,.08);border:1px solid var(--border2);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--cream2);">⚡ 10 séances</div>`:''}
+    ${totalSessions>=25?`<div style="background:rgba(200,146,42,.15);border:1px solid rgba(200,146,42,.3);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--amber);">🏆 25 séances</div>`:''}
+    ${totalSessions>=50?`<div style="background:rgba(200,146,42,.2);border:1px solid rgba(200,146,42,.4);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--amber);">👑 50 séances</div>`:''}
+    ${ctl>=20?`<div style="background:rgba(58,152,152,.12);border:1px solid rgba(58,152,152,.3);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--teal);">📈 CTL 20+</div>`:''}
+    ${p.poids&&p.cible&&p.poidsDepart&&(p.poidsDepart-p.poids)>=5?`<div style="background:rgba(76,175,125,.15);border:1px solid rgba(76,175,125,.3);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--green);">⚖️ -5kg atteint</div>`:''}
+  </div>`;
+
   if(activities.length){
     h+='<div class="sec">Dernières sorties</div><div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:4px 12px;">';
     activities.slice(0,8).forEach(a=>{
